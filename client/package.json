@@ -64,6 +64,7 @@
     "qs": "^6.15.2",
     "serialize-javascript": "^7.0.5",
     "uuid": "^11.1.1",
-    "webpack-dev-server": "^5.2.1"
+    "webpack-dev-server": "^5.2.1",
+    "@tootallnate/once": "^2.0.1"
   }
 }
