@@ -4,10 +4,10 @@
 
 ### *Bridging Languages, Connecting Cultures*
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Now-brightgreen?style=for-the-badge)](https://trinit-bugbiters-dev.onrender.com)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Node.js](https://img.shields.io/badge/Node.js-20.x-green?style=for-the-badge&logo=node.js)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-18.x-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
+![Live Demo](https://img.shields.io/badge/Live%20Demo-Currently%20Offline-red?style=for-the-badge)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-19.x-green?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-19.x-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-green?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
 
 </div>
@@ -17,9 +17,6 @@
 ## 📖 Overview
 
 **Lingua Connect** is an innovative interactive online platform that seamlessly connects language learners with experienced tutors for personalized, one-on-one language lessons. Our platform empowers students to find the perfect tutor based on their target language, fluency level, budget, and schedule preferences.
-
-### 🎥 Demo Video
-[Watch our comprehensive demo video](https://drive.google.com/drive/folders/1FuOogrCMMBdZ2EjXkQJGT1aNbxW4NviK?usp=drive_link)
 
 ---
 
@@ -70,7 +67,7 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18.x** - Modern JavaScript library for building user interfaces
+- **React 19.x** - Modern JavaScript library for building user interfaces
 - **Redux Toolkit** - State management solution
 - **React Router DOM** - Client-side routing
 - **Axios** - HTTP client for API requests
@@ -98,7 +95,7 @@
 ## 📁 Project Structure
 
 ```
-TRINIT_BugBiters_Dev/
+Lingua-Connect/
 ├── 📂 client/                 # React frontend application
 │   ├── 📂 public/            # Static assets
 │   └── 📂 src/
@@ -129,7 +126,7 @@ TRINIT_BugBiters_Dev/
 
 Ensure you have the following installed:
 
-- **Node.js** (v20.0.0 or higher) 📦
+- **Node.js** (v19.0.0 or higher) 📦
 - **npm** (v10.0.0 or higher) 📦
 - **MongoDB** (local or cloud instance) 🗄️
 
@@ -137,8 +134,8 @@ Ensure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Sagargupta16/TRINIT_BugBiters_Dev.git
-   cd TRINIT_BugBiters_Dev
+   git clone https://github.com/Sagargupta16/Lingua-Connect.git
+   cd Lingua-Connect
    ```
 
 2. **Install all dependencies**
@@ -197,7 +194,7 @@ We welcome contributions from the community! Here's how you can help:
 ### Development Workflow
 
 1. **Fork the repository** to your GitHub account
-2. **Create a feature branch** from `develop`:
+2. **Create a feature branch** from `main`:
    ```bash
    git checkout -b feature-your-feature-name
    ```
@@ -210,13 +207,11 @@ We welcome contributions from the community! Here's how you can help:
 - `bugfix-*` for bug fixes
 - `hotfix-*` for urgent fixes
 
-For detailed guidelines, please read our [Contributing Guide](CONTRIBUTING.md).
-
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -261,7 +256,7 @@ Meet the talented developers behind Lingua Connect:
 ## 🔗 Links & Resources
 
 ### 🌐 Live Application
-- **Production**: [https://trinit-bugbiters-dev.onrender.com](https://trinit-bugbiters-dev.onrender.com)
+- **Production**: `https://trinit-bugbiters-dev.onrender.com` (currently offline - Render service suspended)
 
 ### 📚 Documentation & References
 - [MERN Stack Guide](https://www.mongodb.com/mern-stack)
