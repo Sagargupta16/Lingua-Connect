@@ -38,6 +38,14 @@ const studentSchema = new mongoose.Schema(
 
 studentSchema.index({ email: 1 }, { unique: true });
 
+// Never expose the password hash in API responses.
+studentSchema.set("toJSON", {
+  transform: (_doc, ret) => {
+    delete ret.password;
+    return ret;
+  },
+});
+
 const Student = mongoose.model("Student", studentSchema);
 
 module.exports = Student;
