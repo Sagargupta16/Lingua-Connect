@@ -34,10 +34,18 @@ exports.createTest = async (req, res) => {
   }
 };
 
+// Fields a client may change via update. Blocks mass-assignment of
+// timestamps and any future sensitive fields.
+const TEST_UPDATABLE_FIELDS = ["language", "level", "questions"];
+
 exports.updateTest = async (req, res) => {
   try {
-    const { id } = req.params,
-      test = await Test.findByIdAndUpdate(id, req.body, { new: true });
+    const { id } = req.params;
+    const updates = {};
+    for (const field of TEST_UPDATABLE_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    const test = await Test.findByIdAndUpdate(id, updates, { new: true });
     if (!test) return res.status(404).json({ errors: ["Test not found"] });
     res.json(test);
   } catch (error) {
