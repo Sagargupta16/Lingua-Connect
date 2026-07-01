@@ -1,6 +1,10 @@
 const Test = require("../models/Test");
 const logger = require("../utils/logger");
 
+// Fields a client may set/change on a test. Blocks mass-assignment of
+// timestamps and any future sensitive fields.
+const TEST_UPDATABLE_FIELDS = ["language", "level", "questions"];
+
 exports.viewAllTests = async (req, res) => {
   try {
     const tests = await Test.find();
@@ -25,7 +29,11 @@ exports.viewSingleTest = async (req, res) => {
 
 exports.createTest = async (req, res) => {
   try {
-    const test = new Test(req.body);
+    const data = {};
+    for (const field of TEST_UPDATABLE_FIELDS) {
+      if (req.body[field] !== undefined) data[field] = req.body[field];
+    }
+    const test = new Test(data);
     await test.save();
     res.json(test);
   } catch (error) {
@@ -33,10 +41,6 @@ exports.createTest = async (req, res) => {
     res.status(500).json({ errors: ["Internal server error"] });
   }
 };
-
-// Fields a client may change via update. Blocks mass-assignment of
-// timestamps and any future sensitive fields.
-const TEST_UPDATABLE_FIELDS = ["language", "level", "questions"];
 
 exports.updateTest = async (req, res) => {
   try {
