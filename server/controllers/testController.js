@@ -77,7 +77,7 @@ exports.deleteQuestion = async (req, res) => {
     const { id, questionId } = req.params,
       test = await Test.findById(id);
     if (!test) return res.status(404).json({ errors: ["Test not found"] });
-    test.questions.id(questionId).remove();
+    test.questions.pull(questionId);
     await test.save();
     res.json({ message: "Question deleted successfully" });
   } catch (error) {
