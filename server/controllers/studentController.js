@@ -31,10 +31,18 @@ exports.viewSingleStudent = async (req, res) => {
   }
 };
 
+// Fields a client may change via update. Blocks mass-assignment of
+// role, password (has its own reset flow) and ObjectId ref arrays.
+const STUDENT_UPDATABLE_FIELDS = ["name", "email"];
+
 exports.updateStudent = async (req, res) => {
   try {
-    const { id } = req.params,
-      student = await Student.findByIdAndUpdate(id, req.body, { new: true });
+    const { id } = req.params;
+    const updates = {};
+    for (const field of STUDENT_UPDATABLE_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    const student = await Student.findByIdAndUpdate(id, updates, { new: true });
     if (!student)
       return res.status(404).json({ errors: ["Student not found"] });
     res.json(student);

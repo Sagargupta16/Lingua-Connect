@@ -93,7 +93,7 @@ exports.createFlashcard = async (req, res) => {
       return res.status(404).json({ errors: ["Student not found"] });
 
     student.flashcards.push(flashcard._id);
-    student.save();
+    await student.save();
 
     res.json(flashcard);
   } catch (error) {
