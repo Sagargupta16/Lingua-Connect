@@ -24,10 +24,24 @@ exports.viewSingleTutor = async (req, res) => {
   }
 };
 
+// Fields a client may change via update. Blocks mass-assignment of
+// role, password, rating (self-inflation) and ObjectId ref arrays.
+const TUTOR_UPDATABLE_FIELDS = [
+  "name",
+  "email",
+  "languages",
+  "yearsOfExperience",
+  "slotsAvailability",
+];
+
 exports.updateTutor = async (req, res) => {
   try {
-    const { id } = req.params,
-      tutor = await Tutor.findByIdAndUpdate(id, req.body, { new: true });
+    const { id } = req.params;
+    const updates = {};
+    for (const field of TUTOR_UPDATABLE_FIELDS) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    const tutor = await Tutor.findByIdAndUpdate(id, updates, { new: true });
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
     res.json(tutor);
   } catch (error) {
