@@ -1,152 +1,150 @@
 /* src/styles.css */
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
 * {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  outline: 0;
-  box-sizing: border-box;
-  text-decoration: none;
-  font-family: "Figtree", sans-serif;
-  font-optical-sizing: auto;
+   margin: 0;
+   padding: 0;
+   border: 0;
+   outline: 0;
+   box-sizing: border-box;
+   text-decoration: none;
+   font-family: "Figtree", sans-serif;
+   font-optical-sizing: auto;
 }
 
 :root {
-  --transition: all 0.4s ease-in-out;
-  --container-width-lg: 75%;
-  --container-width-md: 86%;
-  --container-width-sm: 90%;
+   --transition: all 0.4s ease-in-out;
+   --container-width-lg: 75%;
+   --container-width-md: 86%;
+   --container-width-sm: 90%;
 
-  --color-white: #ffffff;
-  --color-black: #000000;
-  --color-bg: #f6f8fa;
-  --color-primary: #635bff;
-  --color-primary-variant: rgba(13, 0, 255, 0.79);
-  --color-danger: #ff6666;
-  --color-danger-variant: rgba(255, 102, 102, 0.5);
-  --color-success: #66ff66;
-  --color-success-variant: rgba(102, 255, 102, 0.5);
-  --color-warning: #ffcc66;
-  --color-warning-variant: rgba(255, 204, 102, 0.5);
-  --color-info: #66ccff;
-  --color-info-variant: rgba(102, 204, 255, 0.5);
+   --color-white: #ffffff;
+   --color-black: #000000;
+   --color-bg: #f6f8fa;
+   --color-primary: #635bff;
+   --color-primary-variant: rgba(13, 0, 255, 0.79);
+   --color-danger: #ff6666;
+   --color-danger-variant: rgba(255, 102, 102, 0.5);
+   --color-success: #66ff66;
+   --color-success-variant: rgba(102, 255, 102, 0.5);
+   --color-warning: #ffcc66;
+   --color-warning-variant: rgba(255, 204, 102, 0.5);
+   --color-info: #66ccff;
+   --color-info-variant: rgba(102, 204, 255, 0.5);
 }
 
 html {
-  scroll-behavior: smooth;
-  font-size: 90%;
-  color: var(--color-black);
-  line-height: 1.7;
-  background-color: var(--color-bg);
-  user-select: none;
-  @media screen and (max-width: 600px) {
-    font-size: 85%;
-  }
-  @media screen and (max-width: 400px) {
-    font-size: 80%;
-  }
+   scroll-behavior: smooth;
+   font-size: 90%;
+   color: var(--color-black);
+   line-height: 1.7;
+   background-color: var(--color-bg);
+   user-select: none;
+   @media screen and (max-width: 600px) {
+      font-size: 85%;
+   }
+   @media screen and (max-width: 400px) {
+      font-size: 80%;
+   }
 }
 
 /* Scrollbar CSS */
 
 ::-webkit-scrollbar {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 0.5rem;
-  background-color: transparent;
+   width: 0.5rem;
+   height: 0.5rem;
+   border-radius: 0.5rem;
+   background-color: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  border-radius: 0.5rem;
+   border-radius: 0.5rem;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: transparent;
-  border-radius: 0.5rem;
+   background-color: transparent;
+   border-radius: 0.5rem;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: transparent;
+   background-color: transparent;
 }
 
 ::-webkit-scrollbar-corner {
-  background-color: transparent;
+   background-color: transparent;
 }
 
 /* Global CSS */
 
 .container {
-  width: 100%;
-  margin: 5.5rem 0 0 0;
-  padding: 1rem;
-  height: calc(100vh - 6rem);
-  transition: var(--transition);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  overflow-y: scroll;
+   width: 100%;
+   margin: 5.5rem 0 0 0;
+   padding: 1rem;
+   height: calc(100vh - 6rem);
+   transition: var(--transition);
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: flex-start;
+   overflow-y: scroll;
 }
 
 .container h1 {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: var(--color-primary);
+   font-size: 24px;
+   font-weight: 600;
+   margin-bottom: 20px;
+   color: var(--color-primary);
 }
 
 .btn {
-  width: 100%;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  background-color: var(--color-primary);
-  color: var(--color-bg);
-  transition: var(--transition);
+   width: 100%;
+   padding: 5px 10px;
+   border: none;
+   border-radius: 0.5rem;
+   cursor: pointer;
+   background-color: var(--color-primary);
+   color: var(--color-bg);
+   transition: var(--transition);
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
-  color: var(--color-bg);
+   background-color: var(--color-primary);
+   color: var(--color-bg);
 }
 
 .btn-primary:hover {
-  background-color: var(--color-primary-variant);
+   background-color: var(--color-primary-variant);
 }
 
 .btn-danger {
-  background-color: rgb(240, 100, 100);
-  color: var(--color-bg);
+   background-color: rgb(240, 100, 100);
+   color: var(--color-bg);
 }
 
 .btn-danger:hover {
-  background-color: red;
+   background-color: red;
 }
 
 .btn-primary-inverse {
-  background-color: var(--color-bg);
-  color: var(--color-primary);
+   background-color: var(--color-bg);
+   color: var(--color-primary);
 }
 
 .btn-primary-inverse:hover {
-  background-color: var(--color-bg-variant);
+   background-color: var(--color-bg-variant);
 }
 
 /* Modal */
 .overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 15;
-  backdrop-filter: blur(1.5px);
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: rgba(0, 0, 0, 0.3);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   z-index: 15;
+   backdrop-filter: blur(1.5px);
 }
