@@ -2,7 +2,7 @@
 
 # 🌍 Lingua Connect
 
-### *Bridging Languages, Connecting Cultures*
+### _Bridging Languages, Connecting Cultures_
 
 ![Live Demo](https://img.shields.io/badge/Live%20Demo-Currently%20Offline-red?style=for-the-badge)
 [![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)](LICENSE)
@@ -11,6 +11,8 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-Database-green?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
 
 </div>
+
+> Note: This is a sample/reference project — it is not actively deployed. The Render demo linked below is offline.
 
 ---
 
@@ -24,22 +26,22 @@
 
 ### 👨‍🎓 For Students
 
-| Feature | Description |
-|---------|-------------|
-| 🔐 **User Registration** | Easy and secure account creation process |
-| 🔍 **Smart Tutor Search** | Advanced filtering by language, experience, pricing, and availability |
-| 📅 **Flexible Scheduling** | Choose from 45, 60, or 90-minute lesson durations |
-| 📚 **Interactive Flashcards** | Create, manage, and review language-specific flashcards |
-| 📊 **Progress Tracking** | Monitor learning progress and test results |
+| Feature                       | Description                                                           |
+| ----------------------------- | --------------------------------------------------------------------- |
+| 🔐 **User Registration**      | Easy and secure account creation process                              |
+| 🔍 **Smart Tutor Search**     | Advanced filtering by language, experience, pricing, and availability |
+| 📅 **Flexible Scheduling**    | Choose from 45, 60, or 90-minute lesson durations                     |
+| 📚 **Interactive Flashcards** | Create, manage, and review language-specific flashcards               |
+| 📊 **Progress Tracking**      | Monitor learning progress and test results                            |
 
 ### 👩‍🏫 For Tutors
 
-| Feature | Description |
-|---------|-------------|
-| 🏫 **Class Management** | Set up and organize classes based on availability |
-| 💰 **Dynamic Pricing** | Flexible pricing options based on teaching level |
-| 📋 **Student Assessment** | Create personalized tests with detailed feedback |
-| 📺 **Live Broadcasting** | Host live sessions for multiple students |
+| Feature                   | Description                                       |
+| ------------------------- | ------------------------------------------------- |
+| 🏫 **Class Management**   | Set up and organize classes based on availability |
+| 💰 **Dynamic Pricing**    | Flexible pricing options based on teaching level  |
+| 📋 **Student Assessment** | Create personalized tests with detailed feedback  |
+| 📺 **Live Broadcasting**  | Host live sessions for multiple students          |
 
 ### 🌟 Core Platform Features
 
@@ -53,11 +55,13 @@
 ## 🚀 Advanced Features
 
 ### 📡 Live Broadcasting
+
 - Tutors can host live sessions for multiple students simultaneously
 - Flexible scheduling controlled by tutors
 - Automated notifications for upcoming live sessions
 
 ### 📝 Personalized Assessment System
+
 - Custom test creation by tutors
 - Detailed question-by-question feedback
 - Comprehensive test history and performance analytics
@@ -67,7 +71,9 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React 19.x** - Modern JavaScript library for building user interfaces
+- **Vite** - Fast build tool and dev server
 - **Redux Toolkit** - State management solution
 - **React Router DOM** - Client-side routing
 - **Axios** - HTTP client for API requests
@@ -76,6 +82,7 @@
 - **React Toastify** - Notification system
 
 ### Backend
+
 - **Node.js** - JavaScript runtime environment
 - **Express.js** - Web application framework
 - **MongoDB** - NoSQL database
@@ -85,6 +92,7 @@
 - **Stripe** - Payment processing
 
 ### Development Tools
+
 - **Nodemon** - Development server auto-restart
 - **Concurrently** - Run multiple npm scripts
 - **Prettier** - Code formatting
@@ -96,8 +104,8 @@
 
 ```
 Lingua-Connect/
-├── 📂 client/                 # React frontend application
-│   ├── 📂 public/            # Static assets
+├── 📂 client/                 # React frontend application (Vite)
+│   ├── index.html            # App entry HTML
 │   └── 📂 src/
 │       ├── 📂 api/           # API service files
 │       ├── 📂 components/    # Reusable React components
@@ -105,7 +113,7 @@ Lingua-Connect/
 │       ├── 📂 store/         # Redux store and slices
 │       ├── 📂 utils/         # Utility functions
 │       ├── App.jsx           # Main App component
-│       └── index.js          # Entry point
+│       └── index.jsx         # Entry point
 ├── 📂 server/                # Node.js backend application
 │   ├── 📂 controllers/       # Request handlers
 │   ├── 📂 middleware/        # Custom middleware
@@ -133,21 +141,24 @@ Ensure you have the following installed:
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/Sagargupta16/Lingua-Connect.git
    cd Lingua-Connect
    ```
 
 2. **Install all dependencies**
+
    ```bash
    npm run fb-install
    ```
 
 3. **Set up environment variables**
-   
+
    Create `.env` files in both `client` and `server` directories with necessary configurations:
-   
+
    **Server `.env`:**
+
    ```env
    PORT=5000
    MONGODB_URI=your_mongodb_connection_string
@@ -158,6 +169,7 @@ Ensure you have the following installed:
    ```
 
 4. **Start the development servers**
+
    ```bash
    npm run start
    ```
@@ -203,6 +215,7 @@ We welcome contributions from the community! Here's how you can help:
 5. **Submit a pull request** with a clear description
 
 ### Branch Naming Convention
+
 - `feature-*` for new features
 - `bugfix-*` for bug fixes
 - `hotfix-*` for urgent fixes
@@ -256,9 +269,11 @@ Meet the talented developers behind Lingua Connect:
 ## 🔗 Links & Resources
 
 ### 🌐 Live Application
-- **Production**: `https://trinit-bugbiters-dev.onrender.com` (currently offline - Render service suspended)
+
+- **Production**: `https://trinit-bugbiters-dev.onrender.com` (offline - sample deployment, Render service suspended)
 
 ### 📚 Documentation & References
+
 - [MERN Stack Guide](https://www.mongodb.com/mern-stack)
 - [React Documentation](https://reactjs.org/)
 - [Node.js Documentation](https://nodejs.org/)
@@ -267,6 +282,7 @@ Meet the talented developers behind Lingua Connect:
 - [Stripe Integration Guide](https://stripe.com/docs)
 
 ### 🛠️ Development Tools
+
 - [React Router](https://reactrouter.com/)
 - [Axios HTTP Client](https://axios-http.com/)
 - [JWT Authentication](https://jwt.io/)
