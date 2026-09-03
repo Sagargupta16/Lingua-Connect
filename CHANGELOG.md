@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] - 2026-09-03
+
+- Security: bump react-router 7.18.1 -> 7.18.3 (client, alert #252)
+- Security: force ip-address 10.2.0 -> 10.7.0 via server overrides (alerts #248, #249, #251)
+- Security: force shell-quote 1.8.4 -> 1.10.0 via root overrides (alert #247)
+
 ## [1.2.0] - 2026-03-14
 
 - Add .env.example for server and client

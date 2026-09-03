@@ -1,6 +1,6 @@
 {
   "name": "lingua-connect",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "A language learning platform",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -23,5 +23,8 @@
   },
   "dependencies": {
     "concurrently": "^10.0.3"
+  },
+  "overrides": {
+    "shell-quote": "^1.9.0"
   }
 }
