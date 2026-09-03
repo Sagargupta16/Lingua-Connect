@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.2] - 2026-09-03
+
+- Security: force qs 6.15.3 -> 6.16.0 via server overrides (alerts #255, #256)
+
 ## [1.2.1] - 2026-09-03
 
 - Security: bump react-router 7.18.1 -> 7.18.3 (client, alert #252)
