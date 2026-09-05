@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { CgProfile } from "react-icons/cg";
-import { FaHome, FaSignInAlt, FaVideo } from "react-icons/fa";
+import { FaHome, FaSignInAlt } from "react-icons/fa";
 import { MdClass } from "react-icons/md";
 import { PiSignOutBold } from "react-icons/pi";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
@@ -53,11 +53,6 @@ const NavBar = () => {
           icon: <CgProfile />,
         },
         {
-          to: "VideoCall",
-          label: "Video Call",
-          icon: <FaVideo />,
-        },
-        {
           to: "tutor",
           label: "Tutor",
           icon: <MdClass />,
@@ -75,11 +70,6 @@ const NavBar = () => {
           to: "profile",
           label: "Profile",
           icon: <CgProfile />,
-        },
-        {
-          to: "VideoCall",
-          label: "Video Call",
-          icon: <FaVideo />,
         },
       ]);
     } else {

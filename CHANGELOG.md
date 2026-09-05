@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.0] - 2026-09-05
+
+- Removed: video calling. The `/VideoCall` page, the `/room/:roomId` Zego meet room, the nav entries and the `@zegocloud/zego-uikit-prebuilt` client dependency are gone; the Zego app id and server secret that were hardcoded in `Meet.jsx` leave the codebase with them (rotate them in the ZegoCloud console if that account is still used)
+
 ## [1.2.2] - 2026-09-03
 
 - Security: force qs 6.15.3 -> 6.16.0 via server overrides (alerts #255, #256)

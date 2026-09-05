@@ -7,8 +7,6 @@ import Authentication from "./pages/Auth/Authentication";
 import Home from "./pages/Home/Home";
 import Profile from "./pages/Profile/Profile";
 import Tutor from "./pages/Tutor/Tutor";
-import Meet from "./pages/VideoCall/Meet";
-import VideoCall from "./pages/VideoCall/VideoCall";
 import { checkAuthAction, getAuthToken } from "./utils/auth";
 import Flashcards from "./pages/Flashcards/Flashcards";
 
@@ -30,11 +28,6 @@ const App = () => {
           loader: checkAuthAction,
         },
         {
-          path: "VideoCall",
-          element: <VideoCall />,
-          loader: checkAuthAction,
-        },
-        {
           path: "profile",
           element: <Profile />,
           loader: checkAuthAction,
@@ -52,10 +45,6 @@ const App = () => {
     {
       path: "payment-failed",
       element: <NotFound />,
-    },
-    {
-      path: "room/:roomId",
-      element: <Meet />,
     },
     {
       path: "*",
