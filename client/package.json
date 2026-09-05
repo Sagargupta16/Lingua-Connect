@@ -6,7 +6,6 @@
    "dependencies": {
       "@reduxjs/toolkit": "^2.2.1",
       "@stripe/stripe-js": "^8.0.0",
-      "@zegocloud/zego-uikit-prebuilt": "^2.0.0",
       "axios": "^1.6.5",
       "classnames": "^2.5.1",
       "jwt-decode": "^4.0.0",

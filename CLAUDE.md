@@ -10,7 +10,7 @@
 
 ## Project
 
-MERN platform connecting language learners with tutors: search/filter tutors, book classes, flashcards, tests, Stripe subscriptions, Zego video calls. Built by team BugBiters (TriNIT hackathon); Sagar is project lead.
+MERN platform connecting language learners with tutors: search/filter tutors, book classes, flashcards, tests, Stripe subscriptions. Built by team BugBiters (TriNIT hackathon); Sagar is project lead.
 
 Was live at `https://trinit-bugbiters-dev.onrender.com` -- Render service suspended, currently offline.
 
@@ -63,9 +63,8 @@ No test suite. Root and server `npm test` are placeholders that exit 1; client h
 ## Routes / Pages
 
 - `/` -- Home (NavBar layout root)
-- `/tutor`, `/VideoCall`, `/profile` -- auth-gated (loader `checkAuthAction`)
+- `/tutor`, `/profile` -- auth-gated (loader `checkAuthAction`)
 - `/flashcards`, `/auth` -- public
-- `/room/:roomId` -- Zego meet room
 - `/payment-failed` -- NotFound fallback
 
 ## API routes

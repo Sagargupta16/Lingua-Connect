@@ -45,7 +45,6 @@
 
 ### 🌟 Core Platform Features
 
-- **🎥 HD Video Calling**: Crystal-clear one-on-one video sessions with screen sharing
 - **💳 Subscription Model**: Seamless subscription-based payment system powered by Stripe
 - **📱 Responsive Design**: Optimized for all devices and screen sizes
 - **🔔 Real-time Notifications**: Stay updated with class schedules and announcements
