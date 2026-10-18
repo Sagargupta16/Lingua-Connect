@@ -308,7 +308,7 @@ Starts MongoDB 8, the API (seeded on first start) on :5000 and the built client 
    CLIENT_URL=http://localhost:3000
    ```
 
-   The client optionally reads `VITE_API_URL` to point at an API other than `http://localhost:5000`.
+   `CLIENT_URL` is also the only origin the API accepts browser requests from. The client optionally reads `VITE_API_URL` to point at an API other than `http://localhost:5000`.
 
 4. **Start the development servers**
 

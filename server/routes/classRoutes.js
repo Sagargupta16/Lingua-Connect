@@ -16,9 +16,9 @@ router.get("/view/:id", authenticateUser, classController.viewSingleClass);
 // Create a Class with rate limiting (tutors only; the caller becomes its tutor)
 router.post(
   "/create",
+  limiter,
   authenticateUser,
   checkUserRole(["tutor"]),
-  limiter,
   classController.createClass,
 );
 

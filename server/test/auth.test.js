@@ -1,3 +1,4 @@
+const { randomUUID } = require("node:crypto");
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const Tutor = require("../models/Tutor");
@@ -5,19 +6,22 @@ const { setupDatabase, createStudent, api } = require("./helpers");
 
 setupDatabase();
 
+// Generated per run; signup needs a lower, an upper case letter and a digit.
+const PASSWORD = `Pw1-${randomUUID()}`;
+
 describe("auth", () => {
    it("signs up a student and logs in with the same password", async () => {
       const signup = await api().post("/auth/signup").send({
          name: "Asha",
          email: "asha@example.test",
-         password: "Passw0rd",
+         password: PASSWORD,
          role: "student",
       });
       assert.equal(signup.status, 201);
 
       const login = await api()
          .post("/auth/login")
-         .send({ email: "asha@example.test", password: "Passw0rd" });
+         .send({ email: "asha@example.test", password: PASSWORD });
       assert.equal(login.status, 200);
       assert.ok(login.body.data.token);
 
@@ -39,17 +43,17 @@ describe("auth", () => {
       await createStudent();
       const signup = await api()
          .post("/auth/signup")
-         .send({ name: "x", email: { $ne: null }, password: "Passw0rd" });
+         .send({ name: "x", email: { $ne: null }, password: PASSWORD });
       assert.equal(signup.status, 400);
 
       const reset = await api()
          .post("/auth/reset-password")
-         .send({ email: { $ne: null }, otp: "1", newPassword: "Passw0rd" });
+         .send({ email: { $ne: null }, otp: "1", newPassword: PASSWORD });
       assert.equal(reset.status, 400);
 
       const login = await api()
          .post("/auth/login")
-         .send({ email: { $ne: null }, password: "Passw0rd" });
+         .send({ email: { $ne: null }, password: PASSWORD });
       assert.equal(login.status, 401);
    });
 
@@ -59,7 +63,7 @@ describe("auth", () => {
          .send({
             name: "Meera",
             email: "meera@example.test",
-            password: "Passw0rd",
+            password: PASSWORD,
             role: "tutor",
             languages: ["Hindi", { $gt: "" }],
             yearsOfExperience: 4,
@@ -77,7 +81,7 @@ describe("auth", () => {
       const res = await api().post("/auth/signup").send({
          name: "Noor",
          email: "noor@example.test",
-         password: "Passw0rd",
+         password: PASSWORD,
          role: "tutor",
          yearsOfExperience: 2,
       });

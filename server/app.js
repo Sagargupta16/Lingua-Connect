@@ -27,7 +27,8 @@ const app = express();
 // Middleware to hide version information
 app.disable("x-powered-by");
 
-app.use(cors());
+// Only the client may call the API from a browser.
+app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:3000" }));
 
 app.use(apiLimiter);
 

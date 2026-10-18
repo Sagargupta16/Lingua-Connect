@@ -17,9 +17,9 @@ router.get("/view/:id", authenticateUser, testController.viewSingleTest);
 // Update, delete and question edits return 403 unless the caller owns it.
 router.post(
   "/create",
+  limiter,
   authenticateUser,
   checkUserRole(["tutor"]),
-  limiter,
   testController.createTest,
 );
 

@@ -6,13 +6,14 @@
 - Removed: `POST /student/addClass/:id` and `POST /tutor/addClass/:id`. They let any user attach a class to any account without paying; the webhook links classes now
 - Security: ownership on classes, tests and flashcards. `Test.tutor` and `Flashcard.owner` refs are new; only tutors create classes and tests, only the owner edits or deletes them, students see only their own flashcards, and tutors manage only their own slots. Slot and question bodies are allow-listed. Existing tests and flashcards without an owner become read-only
 - Security: signup builds the account from named fields, so `rating`, `classes` or slots in the body are ignored
+- Security: CORS allows only `CLIENT_URL` (default `http://localhost:3000`) instead of every origin, and the class, test and flashcard routes rate-limit before authenticating
 - Fixed: the server crashed on boot when `STRIPE_SECRET_KEY` came from `.env`, because the Stripe client was created before `dotenv.config()` ran. The client is now created on first use and checkout answers 503 when no key is set
 - Fixed: the price filter on the tutor page compared against a `tutor.price` field that does not exist; it now uses the tutor's cheapest open slot, which the cards also show
 - Fixed: the flashcards page showed three hardcoded languages; it now lists one deck per language the student has, with card counts, and needs a signed-in user
 - Fixed: OTP mail was sent from "My Journey" and the page meta tags described another project; both now say Lingua Connect, with description, Open Graph and Twitter card tags
 - Added: API test suite, 29 tests on `node:test`, supertest and mongodb-memory-server (`npm test`), run in CI
 - Added: `docs/openapi.yaml` (OpenAPI 3.1, 37 operations), kept in sync with the routes by a test
-- Added: demo mode (`npm run demo`) on an in-memory MongoDB with seed data, `npm run seed` for a local database, and `docker compose up` for MongoDB, API and an nginx-served client
+- Added: demo mode (`npm run demo`) on an in-memory MongoDB with seed data, `npm run seed` for a local database, and `docker compose up` for MongoDB, API and an nginx-served client. Both images run as non-root users (the client on unprivileged nginx, port 8080) and the API image copies only its runtime sources
 - Added: initials avatars in place of via.placeholder.com images
 - Changed: mobile layout for the tutor, profile and flashcards pages and every modal; the filter list collapses behind a toggle on phones
 - Docs: README screenshots (desktop and phone) captured by `npm run screenshots`, booking-flow diagram and API table updated for the webhook

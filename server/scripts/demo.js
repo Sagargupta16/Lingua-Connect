@@ -20,7 +20,6 @@ const start = async () => {
    const mongoose = require("mongoose");
    const {
       seed,
-      DEMO_PASSWORD,
       STUDENT_EMAIL,
       TUTOR_EMAIL,
    } = require("./seed");
@@ -32,8 +31,9 @@ const start = async () => {
    const server = app.listen(port, () => {
       console.log(`Demo API on http://localhost:${port} (in-memory MongoDB)`);
       console.log("Seeded:", counts);
-      console.log(`Student: ${STUDENT_EMAIL} / ${DEMO_PASSWORD}`);
-      console.log(`Tutor:   ${TUTOR_EMAIL} / ${DEMO_PASSWORD}`);
+      console.log(`Student: ${STUDENT_EMAIL}`);
+      console.log(`Tutor:   ${TUTOR_EMAIL}`);
+      console.log("Password for both: see the demo section of the README");
    });
 
    const stop = async () => {
