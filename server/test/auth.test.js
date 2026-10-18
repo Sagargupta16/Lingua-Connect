@@ -7,7 +7,8 @@ const { setupDatabase, createStudent, api } = require("./helpers");
 setupDatabase();
 
 // Generated per run; signup needs a lower, an upper case letter and a digit.
-const PASSWORD = `Pw1-${randomUUID()}`;
+const randomLogin = () => randomUUID() + "Aa1";
+const PASSWORD = randomLogin();
 
 describe("auth", () => {
    it("signs up a student and logs in with the same password", async () => {
