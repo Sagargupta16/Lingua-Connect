@@ -4,9 +4,11 @@
    "description": "",
    "main": "index.js",
    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1",
+      "test": "node --test \"test/**/*.test.js\"",
       "start": "node index.js",
-      "dev": "node --watch index.js"
+      "dev": "node --watch index.js",
+      "seed": "node scripts/seed.js",
+      "demo": "node scripts/demo.js"
    },
    "author": "",
    "license": "ISC",
@@ -27,5 +29,10 @@
    "overrides": {
       "ip-address": "^10.3.1",
       "qs": ">=6.16.0"
+   },
+   "devDependencies": {
+      "mongodb-memory-server": "^11.3.0",
+      "supertest": "^7.3.1",
+      "yaml": "^2.9.1"
    }
 }
