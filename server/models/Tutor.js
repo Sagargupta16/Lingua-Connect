@@ -35,8 +35,6 @@ const tutorSchema = new mongoose.Schema(
   },
 );
 
-tutorSchema.index({ email: 1 }, { unique: true });
-
 // Never expose the password hash in API responses.
 tutorSchema.set("toJSON", {
   transform: (_doc, ret) => {

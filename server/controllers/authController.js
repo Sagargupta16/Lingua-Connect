@@ -10,7 +10,11 @@ const crypto = require("crypto");
 exports.postSignup = async (req, res) => {
   try {
     const user = req.body;
-    if (!user.name || !user.email || !user.password)
+    if (
+      !user.name ||
+      typeof user.email !== "string" ||
+      typeof user.password !== "string"
+    )
       return res
         .status(400)
         .json({ errors: ["Name, Email and Password required"] });
@@ -46,19 +50,16 @@ exports.postSignup = async (req, res) => {
     user.password = hashedPassword;
 
     if (user.role === "tutor") {
-      console.log(user);
-      if (user.languages.length === 0) {
+      if (!Array.isArray(user.languages) || user.languages.length === 0) {
         return res
           .status(400)
           .json({ errors: ["Atleast 1 language required"] });
       }
-      console.log(user.yearsOfExperience);
       if (user.yearsOfExperience < 0) {
         return res
           .status(400)
           .json({ errors: ["Years of experience must be greater than 0"] });
       }
-      console.log(user);
       await new Tutor(user).save();
     } else {
       await new Student(user).save();
@@ -117,7 +118,6 @@ exports.getLogin = async (req, res) => {
 // postVerifyEmail with OTP
 exports.postVerifyEmail = async (req, res) => {
   try {
-    console.log(req.body);
     const { email } = req.body;
 
     // Generate a secure OTP
@@ -142,7 +142,7 @@ exports.postVerifyEmail = async (req, res) => {
 
     await new Otp({ email, otp }).save();
 
-    logger.info(`OTP generated for ${email}: ${otp}`);
+    logger.info(`OTP generated for ${email}`);
 
     // Create a nodemailer transporter
     let transporter = nodemailer.createTransport({
@@ -181,7 +181,7 @@ exports.postVerifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
-    if (!email || !otp)
+    if (typeof email !== "string" || !otp)
       return res
         .status(400)
         .json({ status: false, errors: ["Email and OTP required"] });
@@ -198,7 +198,7 @@ exports.postVerifyOTP = async (req, res) => {
       return res
         .status(401)
         .json({ status: false, errors: ["OTP not generated"] });
-    if (existingOtp.otp !== otp)
+    if (existingOtp.otp !== String(otp))
       return res.status(401).json({ status: false, errors: ["Incorrect OTP"] });
 
     // Check OTP expiry
@@ -223,7 +223,7 @@ exports.postVerifyOTP = async (req, res) => {
 exports.postResetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
-    if (!email || !newPassword)
+    if (typeof email !== "string" || typeof newPassword !== "string")
       return res
         .status(400)
         .json({ status: false, errors: ["Email and Password required"] });
@@ -241,7 +241,7 @@ exports.postResetPassword = async (req, res) => {
         .status(401)
         .json({ status: false, errors: ["OTP not generated"] });
 
-    if (existing.otp !== otp)
+    if (existing.otp !== String(otp))
       return res.status(401).json({ status: false, errors: ["Incorrect OTP"] });
 
     if (
@@ -279,7 +279,6 @@ exports.postResetPassword = async (req, res) => {
       messages: ["Password reset successfully"],
     });
   } catch (error) {
-    console.log(error);
     logger.error(error);
     res.status(500).json({ status: false, errors: ["Internal server error"] });
   }

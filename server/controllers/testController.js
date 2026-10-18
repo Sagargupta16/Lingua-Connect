@@ -1,9 +1,15 @@
 const Test = require("../models/Test");
 const logger = require("../utils/logger");
+const { pickScalars, objectArray } = require("../utils/sanitize");
 
 // Fields a client may set/change on a test. Blocks mass-assignment of
-// timestamps and any future sensitive fields.
-const TEST_UPDATABLE_FIELDS = ["language", "level", "questions"];
+// timestamps and any future sensitive fields, and keeps scalars only.
+const testFields = (body) => {
+  const data = pickScalars(body, ["language", "level"]);
+  const questions = objectArray(body?.questions, ["question", "answer"]);
+  if (questions) data.questions = questions;
+  return data;
+};
 
 exports.viewAllTests = async (req, res) => {
   try {
@@ -29,11 +35,7 @@ exports.viewSingleTest = async (req, res) => {
 
 exports.createTest = async (req, res) => {
   try {
-    const data = {};
-    for (const field of TEST_UPDATABLE_FIELDS) {
-      if (req.body[field] !== undefined) data[field] = req.body[field];
-    }
-    const test = new Test(data);
+    const test = new Test(testFields(req.body));
     await test.save();
     res.json(test);
   } catch (error) {
@@ -45,11 +47,9 @@ exports.createTest = async (req, res) => {
 exports.updateTest = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = {};
-    for (const field of TEST_UPDATABLE_FIELDS) {
-      if (req.body[field] !== undefined) updates[field] = req.body[field];
-    }
-    const test = await Test.findByIdAndUpdate(id, updates, { new: true });
+    const test = await Test.findByIdAndUpdate(id, testFields(req.body), {
+      returnDocument: "after",
+    });
     if (!test) return res.status(404).json({ errors: ["Test not found"] });
     res.json(test);
   } catch (error) {

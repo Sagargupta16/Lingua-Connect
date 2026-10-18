@@ -10,6 +10,7 @@ const classRoutes = require("./routes/classRoutes.js");
 const flashcardRoutes = require("./routes/flashcardRoutes.js");
 const testRoutes = require("./routes/testRoutes.js");
 const { authenticateUser } = require("./middleware/authMiddleware.js");
+const { apiLimiter } = require("./utils/limiter.js");
 
 dotenv.config();
 
@@ -28,6 +29,8 @@ app.use(cors());
 
 // Middleware to hide version information
 app.disable("x-powered-by");
+
+app.use(apiLimiter);
 
 app.use("/auth", authRoutes);
 

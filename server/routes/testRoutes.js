@@ -34,7 +34,7 @@ router.post(
 
 // Delete a question from a Test with rate limiting
 router.delete(
-  "/delete-question/:id",
+  "/delete-question/:id/:questionId",
   authenticateUser,
   limiter,
   testController.deleteQuestion,
