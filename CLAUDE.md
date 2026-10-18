@@ -16,28 +16,28 @@ Was live at `https://trinit-bugbiters-dev.onrender.com` -- Render service suspen
 
 ## Stack
 
-- **Language**: JavaScript (Node 19 per `.nvmrc`; server is CommonJS)
-- **Framework**: React 19 + CRA (react-scripts 5) + Redux Toolkit + React Router 7 + Tailwind 4 (client); Express 5 (server)
+- **Language**: JavaScript (Node 24 per `.nvmrc`; server is CommonJS)
+- **Framework**: React 19 + Vite 8 + Redux Toolkit + React Router 7 + Tailwind 4 (client); Express 5 (server)
 - **Database**: MongoDB via Mongoose 9 (no migrations; models in `server/models/`)
 - **Package manager**: npm (three package.jsons: root, `client/`, `server/`)
-- **Deploy target**: Render (suspended). No CI workflows; Renovate enabled.
+- **Deploy target**: Render (suspended). CI in `.github/workflows/ci.yml` (client build, server `node --check` on every file) plus CodeQL default setup; Renovate enabled.
 
 ## Run
 
 ```
 npm run fb-install    # installs root + client + server deps concurrently
-npm run start         # concurrently: server (nodemon, :5000) + client (CRA, :3000)
+npm run start         # concurrently: server (node --watch, :5000) + client (Vite, :3000)
 npm run frontend-build
 ```
 
 ## Test
 
-No test suite. Root and server `npm test` are placeholders that exit 1; client has the default CRA runner but no custom tests.
+No test suite. Root and server `npm test` are placeholders that exit 1; the client has no test runner.
 
 ## Entry points
 
 - `server/index.js` -- Express app: Mongo connect, middleware, route mounts
-- `client/src/index.js` -- React root
+- `client/src/index.jsx` -- React root
 - `client/src/App.jsx` -- router definition (createBrowserRouter)
 
 ## Key files
@@ -49,11 +49,15 @@ No test suite. Root and server `npm test` are placeholders that exit 1; client h
 
 ## Gotchas
 
-- README env var names are WRONG: code reads `DB_CONNECTION_STRING` (not `MONGODB_URI`) and `EMAIL_ID`/`EMAIL_PASSWORD` (not `EMAIL_USER`/`EMAIL_PASS`). Trust `server/index.js` and `server/controllers/`.
+- Env var names: code reads `DB_CONNECTION_STRING` (not `MONGODB_URI`) and `EMAIL_ID`/`EMAIL_PASSWORD` (not `EMAIL_USER`/`EMAIL_PASS`). Trust `server/index.js` and `server/controllers/`.
+- Client reads optional `VITE_API_URL`; without it `client/src/api/axiosInstance.jsx` picks localhost:5000 or the dead Render URL by hostname.
+- Checkout: server returns `{ id, url }` from `/student/create-checkout-session` and the client navigates to `url`. Stripe.js no longer has `redirectToCheckout`, so `@stripe/stripe-js` is not a dependency.
+- Rate limits: `apiLimiter` (300 / 5 min) is app-wide in `server/index.js`; the default export of `server/utils/limiter.js` (100 / 5 min) stays on auth and write routes.
+- Student and tutor `update/:id` and `delete/:id` return 403 unless `:id` is the caller. Tutor `addClass` and `delete-slot` are deliberately NOT owner-checked: the student's booking flow in `TutorModal.jsx` calls them on the tutor's record.
 - Server `.env` must set: `PORT`, `DB_CONNECTION_STRING`, `JWT_SECRET`, `JWT_SALT_ROUNDS`, `STRIPE_SECRET_KEY`, `EMAIL_ID`, `EMAIL_PASSWORD`, `CLIENT_URL`.
 - API routes have NO `/api` prefix -- mounted at `/auth`, `/student`, etc.
 - Root scripts include a typo duplicate `frontent-build`; the correct one is `frontend-build`.
-- Client `package.json` carries heavy `overrides` to patch CRA's stale transitive deps -- don't strip them.
+- Root `package.json` overrides `shell-quote` and server `package.json` overrides `ip-address` and `qs` for security advisories -- don't strip them.
 
 ## Repo-specific rules
 
