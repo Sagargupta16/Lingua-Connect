@@ -6,6 +6,9 @@ on:
    pull_request:
       branches: [main]
 
+permissions:
+   contents: read
+
 jobs:
    client:
       runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
               node-version: 24
               cache: npm
               cache-dependency-path: client/package-lock.json
-         - run: npm ci
+         - run: npm ci --ignore-scripts
          - run: npm run build
 
    server:
@@ -34,5 +37,9 @@ jobs:
               node-version: 24
               cache: npm
               cache-dependency-path: server/package-lock.json
-         - run: npm ci
-         - run: node --check index.js
+         - run: npm ci --ignore-scripts
+         - name: Syntax-check every server file
+           run: |
+              for f in $(git ls-files '*.js'); do
+                 node --check "$f"
+              done
