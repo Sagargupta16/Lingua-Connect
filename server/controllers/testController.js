@@ -11,6 +11,20 @@ const testFields = (body) => {
   return data;
 };
 
+// Load a test and confirm the caller is the tutor who wrote it.
+const findOwnTest = async (req, res) => {
+  const test = await Test.findById(req.params.id);
+  if (!test) {
+    res.status(404).json({ errors: ["Test not found"] });
+    return null;
+  }
+  if (!test.tutor?.equals(req.user._id)) {
+    res.status(403).json({ errors: ["Forbidden"] });
+    return null;
+  }
+  return test;
+};
+
 exports.viewAllTests = async (req, res) => {
   try {
     const tests = await Test.find();
@@ -35,7 +49,7 @@ exports.viewSingleTest = async (req, res) => {
 
 exports.createTest = async (req, res) => {
   try {
-    const test = new Test(testFields(req.body));
+    const test = new Test({ ...testFields(req.body), tutor: req.user._id });
     await test.save();
     res.json(test);
   } catch (error) {
@@ -46,11 +60,10 @@ exports.createTest = async (req, res) => {
 
 exports.updateTest = async (req, res) => {
   try {
-    const { id } = req.params;
-    const test = await Test.findByIdAndUpdate(id, testFields(req.body), {
-      returnDocument: "after",
-    });
-    if (!test) return res.status(404).json({ errors: ["Test not found"] });
+    const test = await findOwnTest(req, res);
+    if (!test) return;
+    test.set(testFields(req.body));
+    await test.save();
     res.json(test);
   } catch (error) {
     logger.error(error);
@@ -60,9 +73,9 @@ exports.updateTest = async (req, res) => {
 
 exports.deleteTest = async (req, res) => {
   try {
-    const { id } = req.params,
-      test = await Test.findByIdAndDelete(id);
-    if (!test) return res.status(404).json({ errors: ["Test not found"] });
+    const test = await findOwnTest(req, res);
+    if (!test) return;
+    await test.deleteOne();
     res.json(test);
   } catch (error) {
     logger.error(error);
@@ -72,10 +85,9 @@ exports.deleteTest = async (req, res) => {
 
 exports.addQuestion = async (req, res) => {
   try {
-    const { id } = req.params,
-      test = await Test.findById(id);
-    if (!test) return res.status(404).json({ errors: ["Test not found"] });
-    test.questions.push(req.body);
+    const test = await findOwnTest(req, res);
+    if (!test) return;
+    test.questions.push(pickScalars(req.body, ["question", "answer"]));
     await test.save();
     res.json(test);
   } catch (error) {
@@ -86,10 +98,9 @@ exports.addQuestion = async (req, res) => {
 
 exports.deleteQuestion = async (req, res) => {
   try {
-    const { id, questionId } = req.params,
-      test = await Test.findById(id);
-    if (!test) return res.status(404).json({ errors: ["Test not found"] });
-    test.questions.pull(questionId);
+    const test = await findOwnTest(req, res);
+    if (!test) return;
+    test.questions.pull(req.params.questionId);
     await test.save();
     res.json({ message: "Question deleted successfully" });
   } catch (error) {

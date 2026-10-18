@@ -14,6 +14,3 @@ export const addSlot = (id, slot) =>
 
 export const deleteSlot = (id, slotId) =>
   axiosInstance.delete(`/tutor/delete-slot/${id}/${slotId}`);
-
-export const addClass = (id, classItem) =>
-  axiosInstance.post(`/tutor/addClass/${id}`, classItem);

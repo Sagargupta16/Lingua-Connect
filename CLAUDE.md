@@ -10,7 +10,7 @@
 
 ## Project
 
-MERN platform connecting language learners with tutors: search/filter tutors, book classes, flashcards, tests, Stripe subscriptions. Built by team BugBiters (TriNIT hackathon); Sagar is project lead.
+MERN platform connecting language learners with tutors: search/filter tutors, book classes (Stripe Checkout + webhook), flashcards, tests. Built by team BugBiters (TriNIT hackathon); Sagar is project lead.
 
 Was live at `https://trinit-bugbiters-dev.onrender.com` -- Render service suspended, currently offline.
 
@@ -27,16 +27,21 @@ Was live at `https://trinit-bugbiters-dev.onrender.com` -- Render service suspen
 ```
 npm run fb-install    # installs root + client + server deps concurrently
 npm run start         # concurrently: server (node --watch, :5000) + client (Vite, :3000)
+npm run demo          # same, but the API runs on an in-memory MongoDB with seed data
 npm run frontend-build
+docker compose up --build   # mongo + api (seeded if empty) + nginx client on :3000
 ```
+
+Demo logins: `student@demo.lingua.dev` / `tutor@demo.lingua.dev`, password `Demo1234` (from `server/scripts/seed.js`).
 
 ## Test
 
-No test suite. Root and server `npm test` are placeholders that exit 1; the client has no test runner.
+`npm test` (root or `server/`) runs `node --test` over `server/test/*.test.js`: supertest against the real `app.js` on mongodb-memory-server, one in-memory DB per file. The Stripe HTTP client is replaced with `setStripe()`; webhook bodies are signed with `Stripe.webhooks.generateTestHeaderString`. `openapi.test.js` fails when a route is added without a `docs/openapi.yaml` entry, and checks the spec version equals the root `package.json` version. The client has no test runner; `npm run screenshots` (Playwright) recaptures `docs/screenshots/` from a running demo.
 
 ## Entry points
 
-- `server/index.js` -- Express app: Mongo connect, middleware, route mounts
+- `server/app.js` -- Express app: middleware and route mounts, no listen (tests and demo import it)
+- `server/index.js` -- loads dotenv, connects Mongo, listens
 - `client/src/index.jsx` -- React root
 - `client/src/App.jsx` -- router definition (createBrowserRouter)
 
@@ -51,10 +56,12 @@ No test suite. Root and server `npm test` are placeholders that exit 1; the clie
 
 - Env var names: code reads `DB_CONNECTION_STRING` (not `MONGODB_URI`) and `EMAIL_ID`/`EMAIL_PASSWORD` (not `EMAIL_USER`/`EMAIL_PASS`). Trust `server/index.js` and `server/controllers/`.
 - Client reads optional `VITE_API_URL`; without it `client/src/api/axiosInstance.jsx` picks localhost:5000 or the dead Render URL by hostname.
-- Checkout: server returns `{ id, url }` from `/student/create-checkout-session` and the client navigates to `url`. Stripe.js no longer has `redirectToCheckout`, so `@stripe/stripe-js` is not a dependency.
+- Checkout: `/student/create-checkout-session` takes `{ tutorId, slotId }` or `{ classId }`, prices from MongoDB and returns `{ id, url }`; the client navigates to `url`. Booking happens only in `POST /stripe/webhook` (`server/controllers/paymentController.js`), mounted before `express.json()` because the signature covers the raw body. Stripe.js no longer has `redirectToCheckout`, so `@stripe/stripe-js` is not a dependency.
+- `server/utils/stripe.js` creates the Stripe client lazily: `new Stripe(undefined)` throws, and an eager client used to crash boot before dotenv loaded.
 - Rate limits: `apiLimiter` (300 / 5 min) is app-wide in `server/index.js`; the default export of `server/utils/limiter.js` (100 / 5 min) stays on auth and write routes.
-- Student and tutor `update/:id` and `delete/:id` return 403 unless `:id` is the caller. Tutor `addClass` and `delete-slot` are deliberately NOT owner-checked: the student's booking flow in `TutorModal.jsx` calls them on the tutor's record.
-- Server `.env` must set: `PORT`, `DB_CONNECTION_STRING`, `JWT_SECRET`, `JWT_SALT_ROUNDS`, `STRIPE_SECRET_KEY`, `EMAIL_ID`, `EMAIL_PASSWORD`, `CLIENT_URL`.
+- Ownership: student/tutor `update`, `delete`, tutor `add-slot` and `delete-slot` return 403 unless `:id` is the caller. Classes (`tutor`), tests (`tutor`) and flashcards (`owner`) are owner-checked on every write; class and test creation is tutor-only. The old `addClass` routes are gone: the webhook links classes.
+- Server `.env` must set: `PORT`, `DB_CONNECTION_STRING`, `JWT_SECRET`, `JWT_SALT_ROUNDS`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `EMAIL_ID`, `EMAIL_PASSWORD`, `CLIENT_URL`.
+- `server/scripts/seed.js` wipes the six collections; it refuses a non-local `DB_CONNECTION_STRING` (anything but localhost, 127.0.0.1 or the compose `mongo` host) without `--force`.
 - API routes have NO `/api` prefix -- mounted at `/auth`, `/student`, etc.
 - Root scripts include a typo duplicate `frontent-build`; the correct one is `frontend-build`.
 - Root `package.json` overrides `shell-quote` and server `package.json` overrides `ip-address` and `qs` for security advisories -- don't strip them.
@@ -68,14 +75,17 @@ No test suite. Root and server `npm test` are placeholders that exit 1; the clie
 
 - `/` -- Home (NavBar layout root)
 - `/tutor`, `/profile` -- auth-gated (loader `checkAuthAction`)
-- `/flashcards`, `/auth` -- public
+- `/auth` -- public
 - `/payment-failed` -- NotFound fallback
+- `/flashcards` is auth-gated too (it decodes the JWT)
 
 ## API routes
 
 - `/auth` -- register/login (JWT)
 - `/student`, `/tutor` -- profiles, search
-- `/class` -- scheduling/booking
+- `/class` -- tutor-owned classes
+- `/stripe/webhook` -- Stripe events (booking)
+- Full contract: `docs/openapi.yaml`
 - `/flashcard` -- flashcard CRUD
 - `/test` -- tutor-created assessments
 

@@ -8,6 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 20;
 }
 
 .modal {
@@ -15,6 +16,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 1rem;
+  max-width: 95vw;
+  max-height: 90dvh;
 
   padding: 20px;
   border-radius: 8px;
@@ -63,9 +67,12 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 20px;
-  width: 60rem;
-  height: 25rem;
+  width: min(60rem, 88vw);
+  max-height: 60dvh;
+  overflow-y: auto;
+  padding: 0.5rem;
 }
 
 .modal_close_btn {

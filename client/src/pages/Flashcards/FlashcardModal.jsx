@@ -8,16 +8,14 @@ import Flashcard from "./Flashcard";
 
 const FlashcardModal = ({ isOpen, onClose, language, id }) => {
   const [flashcards, setFlashcards] = useState([]);
-  console.log(language);
   useEffect(() => {
+    if (!isOpen) return;
     const fetchFlashcards = async () => {
       const response = await getFlashcardRoute(id, language);
-
       setFlashcards(response.data);
-      console.log(response.data);
     };
     fetchFlashcards();
-  }, []);
+  }, [isOpen, id, language]);
 
   // const flashcards = [
   //   {
@@ -44,7 +42,7 @@ const FlashcardModal = ({ isOpen, onClose, language, id }) => {
 
         <ul className={classes["flashcards"]}>
           {flashcards.map((flashcard) => (
-            <Flashcard flashcard={flashcard} key={flashcard.id} />
+            <Flashcard flashcard={flashcard} key={flashcard._id} />
           ))}
         </ul>
         <button className={classes["modal_close_btn"]} onClick={onClose}>

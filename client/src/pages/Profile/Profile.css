@@ -75,6 +75,7 @@
   justify-content: flex-start;
   margin-top: 10px;
   width: 100%;
+  overflow-x: auto;
 }
 
 .upcoming-class {
@@ -88,6 +89,7 @@
   padding: 10px;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   width: 300px;
+  flex-shrink: 0;
 }
 
 .upcoming-class h3 {
@@ -158,4 +160,41 @@
   margin-top: 20px;
   gap: 10px;
   width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .profile {
+    margin-top: 0;
+  }
+
+  .profile-info {
+    margin-top: 8px;
+  }
+
+  .profile-right {
+    margin-top: 0;
+  }
+
+  .profile-right-top {
+    margin-top: 12px;
+  }
+
+  .profile-right-top .logo-badge {
+    font-size: 1.3rem;
+  }
+
+  .upcoming-classes {
+    scroll-snap-type: x mandatory;
+  }
+
+  .upcoming-class {
+    width: 75vw;
+    max-width: 260px;
+    margin: 8px 6px;
+    scroll-snap-align: start;
+  }
+
+  .buttons {
+    flex-direction: row;
+  }
 }

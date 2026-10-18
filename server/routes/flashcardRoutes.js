@@ -7,9 +7,10 @@ const {
 const limiter = require("../utils/limiter");
 const flashcardController = require("../controllers/flashcardController");
 
-// View all Flashcards without rate limiting
+// View all Flashcards with rate limiting
 router.get(
   "/view",
+  limiter,
   authenticateUser,
   checkUserRole(["student"]),
   flashcardController.viewAllFlashcards,
@@ -18,6 +19,7 @@ router.get(
 // View a single Flashcard by ID with rate limiting
 router.get(
   "/view/:id",
+  limiter,
   authenticateUser,
   checkUserRole(["student"]),
   flashcardController.viewSingleFlashcard,

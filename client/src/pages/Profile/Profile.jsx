@@ -1,19 +1,30 @@
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { getStudent } from "../../api/studentApi";
 import { deleteSlot, getTutor } from "../../api/tutorApi";
+import Avatar from "../../components/Avatar/Avatar";
 import Structure from "../../components/Structure/Structure";
 import "./Profile.css";
 import SlotModal from "./SlotModal";
 import TestModal from "./TestModal";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const Profile = () => {
   const [user, setUser] = useState({});
   const [role, setRole] = useState("");
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Stripe sends the student back here after paying. The booking itself is
+  // made by the webhook, which usually lands before this page loads.
+  useEffect(() => {
+    if (searchParams.get("checkout") !== "success") return;
+    toast.success("Payment received. Your class is booked.");
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -43,11 +54,7 @@ const Profile = () => {
   const leftComponent = (
     <div className="profile">
       <div className="profile-info">
-        <img
-          src="https://via.placeholder.com/120"
-          alt="Profile"
-          className="profile-pic"
-        />
+        <Avatar name={user.name} size="lg" />
         <h2 className="username">{user.name}</h2>
         <p className="email">{user.email}</p>
         <p className="role">{role.toUpperCase()}</p>

@@ -1,11 +1,12 @@
+import { useState } from "react";
 import ReactDOM from "react-dom";
-import { createClass } from "../../api/classApi";
-import { addClass } from "../../api/studentApi";
-import { addClass as addClassTutor, deleteSlot } from "../../api/tutorApi";
+import Avatar from "../../components/Avatar/Avatar";
 import Stripe from "./Stripe";
 import "./TutorModal.css";
 
-const TutorModal = ({ isOpen, onClose, tutor, user }) => {
+const TutorModal = ({ isOpen, onClose, tutor }) => {
+  const [pending, setPending] = useState(null);
+
   const formatDate = (date) => {
     const d = new Date(date);
     return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
@@ -17,22 +18,16 @@ const TutorModal = ({ isOpen, onClose, tutor, user }) => {
     return `${d.getHours() > 12 ? d.getHours() - 12 : d.getHours()}:${d.getMinutes().toString().padStart(2, "0")} ${d.getHours() >= 12 ? "PM" : "AM"}`;
   };
 
+  // Only ids go to the server: it prices the booking from its own records,
+  // and the Stripe webhook creates the class once the payment succeeds.
   const onhandleBook = async (bookIn, book) => {
-    if (bookIn === "slot") {
-      const response = await createClass({
-        language: book.language,
-        tutor: tutor._id,
-        startTime: book.startTime,
-        duration: book.duration,
-        price: book.price,
-        level: "beginner",
-        videoId: Math.random().toString(36).substring(7),
-      });
-      await addClass(user._id, response.data);
-      await addClassTutor(tutor._id, response.data);
-      await deleteSlot(tutor._id, book._id);
-    }
-    Stripe({ price: book.price, description: book.language });
+    setPending(book._id);
+    const purchase =
+      bookIn === "slot"
+        ? { tutorId: tutor._id, slotId: book._id }
+        : { classId: book._id };
+    const session = await Stripe(purchase);
+    if (!session) setPending(null);
   };
 
   return ReactDOM.createPortal(
@@ -42,7 +37,7 @@ const TutorModal = ({ isOpen, onClose, tutor, user }) => {
           <div className="modal">
             <div className="modal__header">
               <div className="tutor__image__name">
-                <img src="https://via.placeholder.com/100?text=Tutor" alt="" />
+                <Avatar name={tutor.name} size="lg" />
                 <h3 className="tutor__name">{tutor.name}</h3>
               </div>
               <div className="tutor__details">
@@ -76,9 +71,10 @@ const TutorModal = ({ isOpen, onClose, tutor, user }) => {
                             <div className="upcoming__actions">
                               <button
                                 className="btn"
+                                disabled={pending !== null}
                                 onClick={() => onhandleBook("class", cls)}
                               >
-                                Book
+                                {pending === cls._id ? "Redirecting..." : "Book"}
                               </button>
                             </div>
                           </div>
@@ -108,9 +104,10 @@ const TutorModal = ({ isOpen, onClose, tutor, user }) => {
                             <div className="slot__actions">
                               <button
                                 className="btn"
+                                disabled={pending !== null}
                                 onClick={() => onhandleBook("slot", slot)}
                               >
-                                Book
+                                {pending === slot._id ? "Redirecting..." : "Book"}
                               </button>
                             </div>
                           </div>
@@ -121,9 +118,14 @@ const TutorModal = ({ isOpen, onClose, tutor, user }) => {
                 </div>
               </div>
             </div>
-            <div className="modal__close" onClick={onClose}>
+            <button
+              type="button"
+              className="modal__close"
+              aria-label="Close"
+              onClick={onClose}
+            >
               <span>&times;</span>
-            </div>
+            </button>
           </div>
         </div>
       ) : null}

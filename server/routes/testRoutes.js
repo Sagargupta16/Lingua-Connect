@@ -1,6 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateUser } = require("../middleware/authMiddleware");
+const {
+  authenticateUser,
+  checkUserRole,
+} = require("../middleware/authMiddleware");
 const testController = require("../controllers/testController");
 const limiter = require("../utils/limiter");
 
@@ -10,8 +13,15 @@ router.get("/view", authenticateUser, testController.viewAllTests);
 // View a single Test by ID with rate limiting
 router.get("/view/:id", authenticateUser, testController.viewSingleTest);
 
-// Create a Test with rate limiting
-router.post("/create", authenticateUser, limiter, testController.createTest);
+// Create a Test with rate limiting (tutors only; the caller owns the test).
+// Update, delete and question edits return 403 unless the caller owns it.
+router.post(
+  "/create",
+  limiter,
+  authenticateUser,
+  checkUserRole(["tutor"]),
+  testController.createTest,
+);
 
 // Update a Test with rate limiting
 router.put("/update/:id", authenticateUser, limiter, testController.updateTest);

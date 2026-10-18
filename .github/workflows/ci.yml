@@ -43,3 +43,10 @@ jobs:
               for f in $(git ls-files '*.js'); do
                  node --check "$f"
               done
+         # mongodb-memory-server downloads a MongoDB binary on first use.
+         - uses: actions/cache@v6
+           with:
+              path: ~/.cache/mongodb-binaries
+              key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('server/package-lock.json') }}
+         - name: API tests (node:test, supertest, in-memory MongoDB)
+           run: npm test
