@@ -97,6 +97,8 @@ sequenceDiagram
     P-->>S: redirect to /profile or /payment-failed
 ```
 
+The class is created and the slot removed before payment, so an abandoned checkout still holds the booking. Confirming the booking from Stripe's `checkout.session.completed` webhook is a known follow-up.
+
 ### Data model
 
 | Collection  | Key fields                                                                                              |
@@ -132,7 +134,7 @@ All routes are mounted at the root (no `/api` prefix). Everything except `/auth/
 - **Stateless JWT auth** - a 7-day token signed with `JWT_SECRET`; the middleware re-reads the user on every request so a deleted account stops working immediately.
 - **Stripe Checkout (hosted page)** - no card data touches the app. The server creates a Checkout Session and the client redirects to `session.url` (Stripe.js removed `redirectToCheckout` in its 2025-09-30 release).
 - **Two rate limiters** - a 300 requests / 5 minutes cap on every route (it runs before the JWT lookup), and a stricter 100 / 5 minutes on auth and write routes.
-- **Field allow-lists on updates** - student, tutor and test updates copy only named fields, so a client cannot set `role`, `password` or `rating`; users may only update or delete their own account.
+- **Field allow-lists on updates** - student, tutor and test updates copy only named fields, so a client cannot set `role`, `password` or `rating`. Students and tutors may only update or delete their own record; class, test and flashcard routes do not check ownership yet.
 - **Vite over CRA** - the client moved from Create React App to Vite 8 with the Tailwind 4 plugin.
 
 ---
