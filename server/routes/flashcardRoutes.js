@@ -64,7 +64,7 @@ router.post(
   authenticateUser,
   checkUserRole(["student"]),
   limiter,
-  flashcardController.createFlashcard,
+  flashcardController.createFlashcardForStudent,
 );
 
 module.exports = router;

@@ -1,6 +1,7 @@
-import { loadStripe } from "@stripe/stripe-js";
-const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+import { createCheckoutSession } from "../../api/studentApi";
 
+// Stripe.js removed redirectToCheckout in the 2025-09-30 (clover) release, so
+// the server returns the hosted Checkout URL and the browser navigates to it.
 const Stripe = async ({ price, description }) => {
    const course = {
       price: price,
@@ -9,30 +10,14 @@ const Stripe = async ({ price, description }) => {
       description: description,
    };
 
-   const response = await fetch(
-      "http://localhost:5000/student/create-checkout-session",
-      {
-         method: "POST",
-         headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-         },
-         body: JSON.stringify(course),
-      },
-   );
-
-   const session = await response.json();
-
-   const result = stripe.redirectToCheckout({
-      sessionId: session.id,
-   });
-
-   if (result.error) {
-      console.error(result.error.message);
+   try {
+      const { data: session } = await createCheckoutSession(course);
+      window.location.assign(session.url);
+      return session;
+   } catch (error) {
+      console.error(error.message);
+      return null;
    }
-
-   console.log(result);
-   return result;
 };
 
 export default Stripe;

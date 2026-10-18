@@ -39,7 +39,7 @@ exports.updateFlashcard = async (req, res) => {
   try {
     const { id } = req.params,
       flashcard = await Flashcard.findByIdAndUpdate(id, req.body, {
-        new: true,
+        returnDocument: "after",
       });
     if (!flashcard)
       return res.status(404).json({ errors: ["Flashcard not found"] });
@@ -82,9 +82,8 @@ exports.getFlashCardsByLanguage = async (req, res) => {
   }
 };
 
-exports.createFlashcard = async (req, res) => {
+exports.createFlashcardForStudent = async (req, res) => {
   try {
-    console.log(req.body);
     const flashcard = await Flashcard.create(req.body);
 
     const { id } = req.params;

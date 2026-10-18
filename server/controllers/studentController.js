@@ -37,12 +37,14 @@ const STUDENT_UPDATABLE_FIELDS = ["name", "email"];
 exports.updateStudent = async (req, res) => {
    try {
       const { id } = req.params;
+      if (!req.user._id.equals(id))
+         return res.status(403).json({ errors: ["Forbidden"] });
       const updates = {};
       for (const field of STUDENT_UPDATABLE_FIELDS) {
          if (req.body[field] !== undefined) updates[field] = req.body[field];
       }
       const student = await Student.findByIdAndUpdate(id, updates, {
-         new: true,
+         returnDocument: "after",
       });
       if (!student)
          return res.status(404).json({ errors: ["Student not found"] });
@@ -55,8 +57,10 @@ exports.updateStudent = async (req, res) => {
 
 exports.deleteStudent = async (req, res) => {
    try {
-      const { id } = req.params,
-         student = await Student.findByIdAndDelete(id);
+      const { id } = req.params;
+      if (!req.user._id.equals(id))
+         return res.status(403).json({ errors: ["Forbidden"] });
+      const student = await Student.findByIdAndDelete(id);
       if (!student)
          return res.status(404).json({ errors: ["Student not found"] });
       res.json(student);
@@ -100,7 +104,7 @@ exports.createCheckoutSession = async (req, res) => {
          success_url: `${process.env.CLIENT_URL}/profile`,
          cancel_url: `${process.env.CLIENT_URL}/payment-failed`,
       });
-      res.json({ id: session.id });
+      res.json({ id: session.id, url: session.url });
    } catch (error) {
       logger.error(error);
       res.status(500).json({ errors: ["Internal server error"] });

@@ -36,7 +36,9 @@ exports.createClass = async (req, res) => {
 exports.updateClass = async (req, res) => {
   try {
     const { id } = req.params,
-      class_ = await Class.findByIdAndUpdate(id, req.body, { new: true });
+      class_ = await Class.findByIdAndUpdate(id, req.body, {
+        returnDocument: "after",
+      });
 
     if (!class_) return res.status(404).json({ errors: ["Class not found"] });
     res.json(class_);

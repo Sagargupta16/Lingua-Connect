@@ -14,5 +14,5 @@ export const deleteTest = (id) => axiosInstance.delete(`/test/delete/${id}`);
 export const addQuestion = (id, question) =>
   axiosInstance.post(`/test/add-question/${id}`, question);
 
-export const deleteQuestion = (id, question) =>
-  axiosInstance.delete(`/test/delete-question/${id}`, question);
+export const deleteQuestion = (id, questionId) =>
+  axiosInstance.delete(`/test/delete-question/${id}/${questionId}`);

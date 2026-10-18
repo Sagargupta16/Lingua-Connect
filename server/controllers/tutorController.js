@@ -37,11 +37,15 @@ const TUTOR_UPDATABLE_FIELDS = [
 exports.updateTutor = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!req.user._id.equals(id))
+      return res.status(403).json({ errors: ["Forbidden"] });
     const updates = {};
     for (const field of TUTOR_UPDATABLE_FIELDS) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     }
-    const tutor = await Tutor.findByIdAndUpdate(id, updates, { new: true });
+    const tutor = await Tutor.findByIdAndUpdate(id, updates, {
+      returnDocument: "after",
+    });
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
     res.json(tutor);
   } catch (error) {
@@ -52,8 +56,10 @@ exports.updateTutor = async (req, res) => {
 
 exports.deleteTutor = async (req, res) => {
   try {
-    const { id } = req.params,
-      tutor = await Tutor.findByIdAndDelete(id);
+    const { id } = req.params;
+    if (!req.user._id.equals(id))
+      return res.status(403).json({ errors: ["Forbidden"] });
+    const tutor = await Tutor.findByIdAndDelete(id);
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
     res.json(tutor);
   } catch (error) {

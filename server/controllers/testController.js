@@ -49,7 +49,9 @@ exports.updateTest = async (req, res) => {
     for (const field of TEST_UPDATABLE_FIELDS) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     }
-    const test = await Test.findByIdAndUpdate(id, updates, { new: true });
+    const test = await Test.findByIdAndUpdate(id, updates, {
+      returnDocument: "after",
+    });
     if (!test) return res.status(404).json({ errors: ["Test not found"] });
     res.json(test);
   } catch (error) {
