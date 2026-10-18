@@ -103,7 +103,10 @@ const refund = async (session, reason) => {
    logger.warn(`Refunding checkout ${session.id}: ${reason}`);
    const stripe = getStripe();
    if (stripe && session.payment_intent)
-      await stripe.refunds.create({ payment_intent: session.payment_intent });
+      await stripe.refunds.create(
+         { payment_intent: session.payment_intent },
+         { idempotencyKey: `refund-${session.id}` },
+      );
    return "refunded";
 };
 

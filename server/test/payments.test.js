@@ -29,7 +29,13 @@ beforeEach(() => {
             },
          },
       },
-      refunds: { create: async (params) => refunds.push(params) },
+      refunds: {
+         create: async (params, options) =>
+            refunds.push({
+               ...params,
+               idempotencyKey: options?.idempotencyKey,
+            }),
+      },
    });
 });
 
@@ -223,7 +229,12 @@ describe("stripe webhook", () => {
 
       assert.equal(a.body.result, "booked");
       assert.equal(b.body.result, "refunded");
-      assert.deepEqual(refunds, [{ payment_intent: `pi_${sessions[1].id}` }]);
+      assert.deepEqual(refunds, [
+         {
+            payment_intent: `pi_${sessions[1].id}`,
+            idempotencyKey: `refund-${sessions[1].id}`,
+         },
+      ]);
       assert.equal(await Class.countDocuments(), 1);
       const loser = await Student.findById(second.user._id);
       assert.equal(loser.classes.length, 0);

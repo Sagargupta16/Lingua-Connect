@@ -12,6 +12,3 @@ export const deleteStudent = (id) =>
 
 export const createCheckoutSession = (item) =>
   axiosInstance.post("/student/create-checkout-session", item);
-
-export const addClass = (id, item) =>
-  axiosInstance.post(`/student/addClass/${id}`, item);
