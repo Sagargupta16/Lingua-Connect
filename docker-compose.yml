@@ -1,0 +1,53 @@
+# One-command local stack: MongoDB, the API (seeded with demo data on first
+# start) and the built client.
+#
+#   docker compose up --build
+#   open http://localhost:3000 and log in as student@demo.lingua.dev / Demo1234
+#
+# Stripe and OTP mail need real keys; put STRIPE_SECRET_KEY,
+# STRIPE_WEBHOOK_SECRET, EMAIL_ID and EMAIL_PASSWORD in a root .env file
+# (compose reads it automatically) or export them before running.
+services:
+   mongo:
+      image: mongo:8
+      volumes:
+         - mongo-data:/data/db
+      healthcheck:
+         test:
+            ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+         interval: 5s
+         timeout: 5s
+         retries: 20
+
+   api:
+      build: ./server
+      depends_on:
+         mongo:
+            condition: service_healthy
+      environment:
+         PORT: 5000
+         DB_CONNECTION_STRING: mongodb://mongo:27017/lingua-connect
+         # Development default only; set JWT_SECRET for anything shared.
+         JWT_SECRET: ${JWT_SECRET:-local-dev-only-change-me}
+         JWT_SALT_ROUNDS: 10
+         CLIENT_URL: http://localhost:3000
+         STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+         STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+         EMAIL_ID: ${EMAIL_ID:-}
+         EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+      command: sh -c "node scripts/seed.js --if-empty && node index.js"
+      ports:
+         - "5000:5000"
+
+   client:
+      build:
+         context: ./client
+         args:
+            VITE_API_URL: http://localhost:5000
+      depends_on:
+         - api
+      ports:
+         - "3000:80"
+
+volumes:
+   mongo-data:
