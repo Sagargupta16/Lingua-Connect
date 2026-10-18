@@ -35,6 +35,7 @@ const App = () => {
         {
           path: "flashcards",
           element: <Flashcards />,
+          loader: checkAuthAction,
         },
         {
           path: "auth",

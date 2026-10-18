@@ -148,3 +148,11 @@ html {
    z-index: 15;
    backdrop-filter: blur(1.5px);
 }
+
+@media screen and (max-width: 600px) {
+   .container {
+      margin-top: 4rem;
+      height: calc(100dvh - 4rem);
+      padding: 0.5rem;
+   }
+}

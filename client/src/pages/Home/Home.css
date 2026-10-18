@@ -89,3 +89,21 @@
   text-align: center;
   margin-top: auto;
 }
+
+@media screen and (max-width: 600px) {
+  .hero {
+    padding: 2.5rem 1rem;
+  }
+
+  .hero h1 {
+    font-size: 1.9rem;
+  }
+
+  .search-bar {
+    flex-direction: column;
+  }
+
+  .search-bar button {
+    width: 100%;
+  }
+}

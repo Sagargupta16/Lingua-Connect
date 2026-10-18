@@ -1,0 +1,777 @@
+openapi: 3.1.0
+info:
+   title: Lingua Connect API
+   version: 1.5.0
+   description: >-
+      REST API behind the Lingua Connect tutor marketplace. Routes are mounted
+      at the root (no /api prefix). Everything except /auth/* and
+      /stripe/webhook needs a Bearer JWT from POST /auth/login.
+      server/test/openapi.test.js fails if a route exists in the code but not here.
+   license:
+      name: GPL-3.0
+servers:
+   - url: http://localhost:5000
+     description: Local (npm run start, npm run demo or docker compose up)
+security:
+   - bearerAuth: []
+tags:
+   - name: auth
+   - name: student
+   - name: tutor
+   - name: class
+   - name: flashcard
+   - name: test
+   - name: payments
+
+paths:
+   /auth/signup:
+      post:
+         tags: [auth]
+         summary: Create a student or tutor account
+         security: []
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/SignupRequest" }
+         responses:
+            "201": { $ref: "#/components/responses/Message" }
+            "400": { $ref: "#/components/responses/Error" }
+            "401":
+               description: Password does not meet the strength rule
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Error" }
+   /auth/login:
+      post:
+         tags: [auth]
+         summary: Exchange email and password for a 7-day JWT
+         security: []
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     required: [email, password]
+                     properties:
+                        email: { type: string, format: email }
+                        password: { type: string }
+         responses:
+            "200":
+               description: Logged in
+               content:
+                  application/json:
+                     schema:
+                        type: object
+                        properties:
+                           status: { type: boolean }
+                           data:
+                              type: object
+                              properties:
+                                 token: { type: string }
+                           messages: { type: array, items: { type: string } }
+            "401": { $ref: "#/components/responses/Error" }
+   /auth/verify-email:
+      post:
+         tags: [auth]
+         summary: Mail a 6-digit OTP to an existing account
+         security: []
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     required: [email]
+                     properties:
+                        email: { type: string, format: email }
+         responses:
+            "200": { $ref: "#/components/responses/Message" }
+            "401": { $ref: "#/components/responses/Error" }
+   /auth/verify-otp:
+      post:
+         tags: [auth]
+         summary: Check an OTP (valid for 10 minutes)
+         security: []
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     required: [email, otp]
+                     properties:
+                        email: { type: string, format: email }
+                        otp: { type: string }
+         responses:
+            "200": { $ref: "#/components/responses/Message" }
+            "400": { $ref: "#/components/responses/Error" }
+            "401": { $ref: "#/components/responses/Error" }
+   /auth/reset-password:
+      post:
+         tags: [auth]
+         summary: Set a new password with a valid OTP
+         security: []
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     required: [email, otp, newPassword]
+                     properties:
+                        email: { type: string, format: email }
+                        otp: { type: string }
+                        newPassword: { type: string }
+         responses:
+            "200": { $ref: "#/components/responses/Message" }
+            "400": { $ref: "#/components/responses/Error" }
+            "401": { $ref: "#/components/responses/Error" }
+
+   /student/view:
+      get:
+         tags: [student]
+         summary: List students
+         responses:
+            "200":
+               description: Students
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Student" }
+   /student/view/{id}:
+      get:
+         tags: [student]
+         summary: One student with classes, tests and flashcards populated
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200":
+               description: Student
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Student" }
+            "404": { $ref: "#/components/responses/Error" }
+   /student/update/{id}:
+      put:
+         tags: [student]
+         summary: Update your own name or email
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     properties:
+                        name: { type: string }
+                        email: { type: string, format: email }
+         responses:
+            "200":
+               description: Updated student
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Student" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /student/delete/{id}:
+      delete:
+         tags: [student]
+         summary: Delete your own account
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200": { description: Deleted student }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /student/create-checkout-session:
+      post:
+         tags: [payments]
+         summary: Start a Stripe Checkout for a slot or an existing class
+         description: >-
+            Students only. Send either tutorId and slotId, or classId. The amount
+            is read from the stored slot or class; any price in the body is
+            ignored. Nothing is booked here: the slot stays open until Stripe
+            reports the payment to /stripe/webhook.
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     oneOf:
+                        - type: object
+                          required: [tutorId, slotId]
+                          properties:
+                             tutorId: { type: string }
+                             slotId: { type: string }
+                        - type: object
+                          required: [classId]
+                          properties:
+                             classId: { type: string }
+         responses:
+            "200":
+               description: Hosted Checkout page to redirect to
+               content:
+                  application/json:
+                     schema:
+                        type: object
+                        properties:
+                           id: { type: string }
+                           url: { type: string, format: uri }
+            "400": { $ref: "#/components/responses/Error" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+            "404": { $ref: "#/components/responses/Error" }
+            "409":
+               description: The student already has this class
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Error" }
+            "503":
+               description: STRIPE_SECRET_KEY is not set
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Error" }
+
+   /tutor/view:
+      get:
+         tags: [tutor]
+         summary: List tutors with their classes
+         responses:
+            "200":
+               description: Tutors
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Tutor" }
+   /tutor/view/{id}:
+      get:
+         tags: [tutor]
+         summary: One tutor with classes populated
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200":
+               description: Tutor
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Tutor" }
+            "404": { $ref: "#/components/responses/Error" }
+   /tutor/update/{id}:
+      put:
+         tags: [tutor]
+         summary: Update your own profile (name, email, languages, experience, slots)
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     properties:
+                        name: { type: string }
+                        email: { type: string, format: email }
+                        languages: { type: array, items: { type: string } }
+                        yearsOfExperience: { type: number }
+                        slotsAvailability:
+                           type: array
+                           items: { $ref: "#/components/schemas/Slot" }
+         responses:
+            "200":
+               description: Updated tutor
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Tutor" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /tutor/delete/{id}:
+      delete:
+         tags: [tutor]
+         summary: Delete your own account
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200": { description: Deleted tutor }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /tutor/add-slot/{id}:
+      post:
+         tags: [tutor]
+         summary: Publish an availability slot on your own profile
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/Slot" }
+         responses:
+            "200":
+               description: Tutor with the new slot
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Tutor" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /tutor/delete-slot/{id}/{slotId}:
+      delete:
+         tags: [tutor]
+         summary: Remove one of your own slots
+         parameters:
+            - { $ref: "#/components/parameters/id" }
+            - name: slotId
+              in: path
+              required: true
+              schema: { type: string }
+         responses:
+            "200": { description: Tutor without the slot }
+            "403": { $ref: "#/components/responses/Forbidden" }
+
+   /class/view:
+      get:
+         tags: [class]
+         summary: List classes
+         responses:
+            "200":
+               description: Classes
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Class" }
+   /class/view/{id}:
+      get:
+         tags: [class]
+         summary: One class
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200":
+               description: Class
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Class" }
+            "404": { $ref: "#/components/responses/Error" }
+   /class/create:
+      post:
+         tags: [class]
+         summary: Create a class (tutors only; the caller becomes its tutor)
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/ClassInput" }
+         responses:
+            "200":
+               description: Created class
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Class" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /class/update/{id}:
+      put:
+         tags: [class]
+         summary: Update a class you teach
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/ClassInput" }
+         responses:
+            "200":
+               description: Updated class
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Class" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+            "404": { $ref: "#/components/responses/Error" }
+   /class/delete/{id}:
+      delete:
+         tags: [class]
+         summary: Delete a class you teach
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200": { description: Deleted class }
+            "403": { $ref: "#/components/responses/Forbidden" }
+            "404": { $ref: "#/components/responses/Error" }
+
+   /flashcard/view:
+      get:
+         tags: [flashcard]
+         summary: Your own flashcards (students only)
+         responses:
+            "200":
+               description: Flashcards
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Flashcard" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /flashcard/view/{id}:
+      get:
+         tags: [flashcard]
+         summary: One of your flashcards
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200":
+               description: Flashcard
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Flashcard" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+            "404": { $ref: "#/components/responses/Error" }
+   /flashcard/create:
+      post:
+         tags: [flashcard]
+         summary: Create a flashcard owned by the caller
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/FlashcardInput" }
+         responses:
+            "200":
+               description: Created flashcard
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Flashcard" }
+   /flashcard/create/{id}:
+      post:
+         tags: [flashcard]
+         summary: Same as /flashcard/create, addressed by your own student id
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/FlashcardInput" }
+         responses:
+            "200":
+               description: Created flashcard
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Flashcard" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /flashcard/get/{id}:
+      post:
+         tags: [flashcard]
+         summary: Your flashcards for one language
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema:
+                     type: object
+                     required: [language]
+                     properties:
+                        language: { type: string }
+         responses:
+            "200":
+               description: Flashcards
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Flashcard" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /flashcard/update/{id}:
+      put:
+         tags: [flashcard]
+         summary: Update one of your flashcards
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/FlashcardInput" }
+         responses:
+            "200":
+               description: Updated flashcard
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Flashcard" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /flashcard/delete/{id}:
+      delete:
+         tags: [flashcard]
+         summary: Delete one of your flashcards
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200": { description: Deleted flashcard }
+            "403": { $ref: "#/components/responses/Forbidden" }
+
+   /test/view:
+      get:
+         tags: [test]
+         summary: List tests
+         responses:
+            "200":
+               description: Tests
+               content:
+                  application/json:
+                     schema:
+                        type: array
+                        items: { $ref: "#/components/schemas/Test" }
+   /test/view/{id}:
+      get:
+         tags: [test]
+         summary: One test
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200":
+               description: Test
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Test" }
+            "404": { $ref: "#/components/responses/Error" }
+   /test/create:
+      post:
+         tags: [test]
+         summary: Write a test (tutors only; the caller owns it)
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/TestInput" }
+         responses:
+            "200":
+               description: Created test
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Test" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /test/update/{id}:
+      put:
+         tags: [test]
+         summary: Update a test you wrote
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/TestInput" }
+         responses:
+            "200":
+               description: Updated test
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Test" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /test/delete/{id}:
+      delete:
+         tags: [test]
+         summary: Delete a test you wrote
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         responses:
+            "200": { description: Deleted test }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /test/add-question/{id}:
+      post:
+         tags: [test]
+         summary: Append a question to a test you wrote
+         parameters: [{ $ref: "#/components/parameters/id" }]
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { $ref: "#/components/schemas/Question" }
+         responses:
+            "200":
+               description: Test with the new question
+               content:
+                  application/json:
+                     schema: { $ref: "#/components/schemas/Test" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+   /test/delete-question/{id}/{questionId}:
+      delete:
+         tags: [test]
+         summary: Remove a question from a test you wrote
+         parameters:
+            - { $ref: "#/components/parameters/id" }
+            - name: questionId
+              in: path
+              required: true
+              schema: { type: string }
+         responses:
+            "200": { $ref: "#/components/responses/Message" }
+            "403": { $ref: "#/components/responses/Forbidden" }
+
+   /stripe/webhook:
+      post:
+         tags: [payments]
+         summary: Stripe event receiver (books the class after payment)
+         description: >-
+            Authenticated by the Stripe-Signature header over the raw body
+            (STRIPE_WEBHOOK_SECRET). On checkout.session.completed with
+            payment_status paid, or checkout.session.async_payment_succeeded,
+            the server creates the class, links it to the student and tutor and
+            removes the slot. The Checkout Session id is a unique key on Class,
+            so replays return "duplicate". If the slot was already taken by
+            another payment, the payment is refunded.
+         security: []
+         parameters:
+            - name: Stripe-Signature
+              in: header
+              required: true
+              schema: { type: string }
+         requestBody:
+            required: true
+            content:
+               application/json:
+                  schema: { type: object }
+         responses:
+            "200":
+               description: Event processed
+               content:
+                  application/json:
+                     schema:
+                        type: object
+                        properties:
+                           received: { type: boolean }
+                           result:
+                              type: string
+                              enum: [booked, duplicate, refunded, ignored]
+            "400": { $ref: "#/components/responses/Error" }
+
+   /token-check:
+      get:
+         tags: [auth]
+         summary: Returns isAuthenticated true for a valid token
+         responses:
+            "200":
+               description: Token is valid
+               content:
+                  application/json:
+                     schema:
+                        type: object
+                        properties:
+                           isAuthenticated: { type: boolean }
+            "401": { description: Missing, invalid or expired token }
+
+components:
+   securitySchemes:
+      bearerAuth:
+         type: http
+         scheme: bearer
+         bearerFormat: JWT
+   parameters:
+      id:
+         name: id
+         in: path
+         required: true
+         schema: { type: string, description: MongoDB ObjectId }
+   responses:
+      Message:
+         description: Success message
+         content:
+            application/json:
+               schema:
+                  type: object
+                  properties:
+                     messages: { type: array, items: { type: string } }
+      Error:
+         description: Request rejected
+         content:
+            application/json:
+               schema: { $ref: "#/components/schemas/Error" }
+      Forbidden:
+         description: Authenticated, but the record belongs to someone else or the role is wrong
+         content:
+            application/json:
+               schema: { $ref: "#/components/schemas/Error" }
+   schemas:
+      Error:
+         type: object
+         properties:
+            errors: { type: array, items: { type: string } }
+      SignupRequest:
+         type: object
+         required: [name, email, password, role]
+         properties:
+            name: { type: string }
+            email: { type: string, format: email }
+            password:
+               type: string
+               description: At least 6 characters with an upper case letter, a lower case letter and a digit
+            role: { type: string, enum: [student, tutor] }
+            languages:
+               type: array
+               items: { type: string }
+               description: Required for tutors
+            yearsOfExperience: { type: number, minimum: 0 }
+      Student:
+         type: object
+         properties:
+            _id: { type: string }
+            name: { type: string }
+            email: { type: string }
+            role: { type: string, enum: [student] }
+            classes: { type: array, items: {} }
+            tests: { type: array, items: {} }
+            flashcards: { type: array, items: {} }
+            createdAt: { type: string, format: date-time }
+      Slot:
+         type: object
+         properties:
+            _id: { type: string }
+            id: { type: string, description: Generated by the server }
+            date: { type: string, format: date }
+            startTime: { type: string, format: date-time }
+            duration: { type: number, enum: [45, 60, 90] }
+            price: { type: number, description: INR }
+            language: { type: string }
+      Tutor:
+         type: object
+         properties:
+            _id: { type: string }
+            name: { type: string }
+            email: { type: string }
+            role: { type: string, enum: [tutor] }
+            languages: { type: array, items: { type: string } }
+            yearsOfExperience: { type: number }
+            rating: { type: number, minimum: 0, maximum: 5 }
+            classes: { type: array, items: {} }
+            slotsAvailability:
+               type: array
+               items: { $ref: "#/components/schemas/Slot" }
+      ClassInput:
+         type: object
+         properties:
+            language: { type: string }
+            startTime: { type: string, format: date-time }
+            duration: { type: number }
+            price: { type: number }
+            level: { type: string }
+            isCancelled: { type: boolean }
+            videoId: { type: string }
+      Class:
+         allOf:
+            - { $ref: "#/components/schemas/ClassInput" }
+            - type: object
+              properties:
+                 _id: { type: string }
+                 tutor: { type: string }
+                 stripeSessionId: { type: string }
+      Question:
+         type: object
+         properties:
+            question: { type: string }
+            answer: { type: string }
+      TestInput:
+         type: object
+         properties:
+            language: { type: string }
+            level: { type: string }
+            questions:
+               type: array
+               items: { $ref: "#/components/schemas/Question" }
+      Test:
+         allOf:
+            - { $ref: "#/components/schemas/TestInput" }
+            - type: object
+              properties:
+                 _id: { type: string }
+                 tutor: { type: string }
+      FlashcardInput:
+         type: object
+         required: [language, question, answer]
+         properties:
+            language: { type: string }
+            question: { type: string }
+            answer: { type: string }
+      Flashcard:
+         allOf:
+            - { $ref: "#/components/schemas/FlashcardInput" }
+            - type: object
+              properties:
+                 _id: { type: string }
+                 owner: { type: string }

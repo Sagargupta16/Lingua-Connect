@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { authenticateUser } = require("../middleware/authMiddleware");
+const {
+  authenticateUser,
+  checkUserRole,
+} = require("../middleware/authMiddleware");
 const studentController = require("../controllers/studentController");
+const paymentController = require("../controllers/paymentController");
 const limiter = require("../utils/limiter");
 
 // View all Students without rate limiting
@@ -26,12 +30,14 @@ router.delete(
   studentController.deleteStudent,
 );
 
+// Start a Stripe Checkout for a tutor's slot or an existing class. The
+// price is read from the database; the booking is made by the webhook.
 router.post(
   "/create-checkout-session",
   authenticateUser,
-  studentController.createCheckoutSession,
+  checkUserRole(["student"]),
+  limiter,
+  paymentController.createCheckoutSession,
 );
-
-router.post("/addClass/:id", authenticateUser, studentController.addClass);
 
 module.exports = router;

@@ -202,3 +202,10 @@
   font-size: 1rem;
   width: 100%;
 }
+
+@media screen and (max-width: 600px) {
+  .auth-form {
+    width: 94%;
+    padding: 1rem;
+  }
+}

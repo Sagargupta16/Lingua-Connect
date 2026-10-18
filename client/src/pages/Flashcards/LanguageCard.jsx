@@ -5,7 +5,7 @@ import FlashcardModal from "./FlashcardModal";
 
 import { jwtDecode } from "jwt-decode";
 
-const LanguageCard = ({ language }) => {
+const LanguageCard = ({ language, count }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const decodedToken = jwtDecode(localStorage.getItem("token"));
   const handleClick = () => {
@@ -16,6 +16,9 @@ const LanguageCard = ({ language }) => {
       <div className={classes["card"]} onClick={handleClick}>
         <div className={classes["card-content"]}>
           <h3>{language}</h3>
+          <span className={classes.count}>
+            {count} {count === 1 ? "card" : "cards"}
+          </span>
         </div>
       </div>
       <FlashcardModal
