@@ -10,10 +10,12 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 20;
 }
 
 /* modal */
 .modal {
+  position: relative;
   background-color: var(--color-bg);
   border-radius: 8px;
   width: 80%;
@@ -146,14 +148,17 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  /* flex-start, not center: centred overflow cannot be scrolled to */
+  justify-content: flex-start;
   gap: 1rem;
 }
 
 .modal__close {
   position: absolute;
-  top: 6rem;
-  right: 15.5rem;
+  top: 0.5rem;
+  right: 1.2rem;
+  background: none;
+  line-height: 1;
   font-size: 4rem;
   cursor: pointer;
   transition: var(--transition);
@@ -173,6 +178,7 @@
   justify-content: center;
   gap: 1rem;
   width: 200px;
+  flex-shrink: 0;
   padding: 1rem;
   border-radius: 1rem;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
@@ -189,4 +195,74 @@
   margin-top: 0.3rem;
   padding: 0.7rem;
   border-radius: 0.25rem;
+}
+
+.slot__actions,
+.upcoming__actions {
+  width: 100%;
+}
+
+.slot__actions .btn,
+.upcoming__actions .btn {
+  padding: 0.6rem 1rem;
+}
+
+.slot__actions .btn:disabled,
+.upcoming__actions .btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@media screen and (max-width: 768px) {
+  .modal {
+    width: 94%;
+    height: 88vh;
+    margin-top: 0;
+    padding: 12px;
+  }
+
+  .modal__header {
+    flex-direction: column;
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .tutor__image__name {
+    width: 100%;
+  }
+
+  .tutor__image__name h3 {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .modal__close {
+    top: 0.8rem;
+    right: 1.2rem;
+    font-size: 3rem;
+  }
+
+  .upcoming_classes,
+  .available-slots {
+    padding: 8px 0;
+    align-items: stretch;
+  }
+
+  .upcoming_classes .logo-badge,
+  .available-slots .logo-badge {
+    align-self: center;
+    font-size: 1.3rem;
+  }
+
+  .upcoming_classes__list,
+  .slots__list {
+    padding: 0.5rem 0.25rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .upcoming__card,
+  .slot__card {
+    width: 75vw;
+    max-width: 240px;
+    scroll-snap-align: start;
+  }
 }

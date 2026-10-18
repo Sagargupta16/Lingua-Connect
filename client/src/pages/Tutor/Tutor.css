@@ -38,7 +38,7 @@
 }
 
 .tutor-card {
-  width: 300px;
+  width: min(300px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -151,4 +151,43 @@
   font-weight: bold;
   cursor: pointer;
   transition: var(--transition);
+}
+
+.tutor__price {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+@media screen and (max-width: 600px) {
+  .tutor-list {
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .tutor-card {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .tutor__details {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 14px;
+  }
+
+  .tutor__info {
+    align-items: flex-start;
+  }
+
+  .tutor__languages {
+    justify-content: flex-start;
+    margin-bottom: 0;
+  }
+
+  .tutor__name {
+    font-size: 1.3em;
+  }
 }
