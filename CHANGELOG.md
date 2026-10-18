@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.5.0] - 2026-10-18
+
+- Changed: payments are booked by a signed Stripe webhook. `POST /student/create-checkout-session` now takes `{ tutorId, slotId }` or `{ classId }` and prices the session from MongoDB, so the browser can no longer choose the amount; the slot stays open until `POST /stripe/webhook` receives `checkout.session.completed`. The webhook verifies `Stripe-Signature` (new `STRIPE_WEBHOOK_SECRET`), is idempotent on a unique `Class.stripeSessionId`, and refunds the second payment when two students pay for the same slot. The hardcoded "Jenny Rosen" Stripe customer is gone; sessions use the student's email
+- Removed: `POST /student/addClass/:id` and `POST /tutor/addClass/:id`. They let any user attach a class to any account without paying; the webhook links classes now
+- Security: ownership on classes, tests and flashcards. `Test.tutor` and `Flashcard.owner` refs are new; only tutors create classes and tests, only the owner edits or deletes them, students see only their own flashcards, and tutors manage only their own slots. Slot and question bodies are allow-listed. Existing tests and flashcards without an owner become read-only
+- Security: signup builds the account from named fields, so `rating`, `classes` or slots in the body are ignored
+- Fixed: the server crashed on boot when `STRIPE_SECRET_KEY` came from `.env`, because the Stripe client was created before `dotenv.config()` ran. The client is now created on first use and checkout answers 503 when no key is set
+- Fixed: the price filter on the tutor page compared against a `tutor.price` field that does not exist; it now uses the tutor's cheapest open slot, which the cards also show
+- Fixed: the flashcards page showed three hardcoded languages; it now lists one deck per language the student has, with card counts, and needs a signed-in user
+- Fixed: OTP mail was sent from "My Journey" and the page meta tags described another project; both now say Lingua Connect, with description, Open Graph and Twitter card tags
+- Added: API test suite, 29 tests on `node:test`, supertest and mongodb-memory-server (`npm test`), run in CI
+- Added: `docs/openapi.yaml` (OpenAPI 3.1, 37 operations), kept in sync with the routes by a test
+- Added: demo mode (`npm run demo`) on an in-memory MongoDB with seed data, `npm run seed` for a local database, and `docker compose up` for MongoDB, API and an nginx-served client
+- Added: initials avatars in place of via.placeholder.com images
+- Changed: mobile layout for the tutor, profile and flashcards pages and every modal; the filter list collapses behind a toggle on phones
+- Docs: README screenshots (desktop and phone) captured by `npm run screenshots`, booking-flow diagram and API table updated for the webhook
+
 ## [1.4.0] - 2026-10-18
 
 - Fixed: Stripe checkout. Stripe.js removed `redirectToCheckout` in its 2025-09-30 release, so the server now returns the Checkout Session `url` and the client redirects to it through the shared Axios instance instead of a hardcoded `http://localhost:5000` fetch; `@stripe/stripe-js` is dropped from the client

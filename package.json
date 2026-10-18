@@ -1,9 +1,11 @@
 {
   "name": "lingua-connect",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "A language learning platform",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd server && npm test",
+    "demo": "concurrently -n api,web \"cd server && npm run demo\" \"npm run frontend-start\"",
+    "screenshots": "node scripts/screenshots.mjs",
     "format": "prettier --write .",
     "frontend-start": "cd client && npm start",
     "frontent-build": "cd client && npm run build",
@@ -17,6 +19,7 @@
   "author": "Sagar Gupta",
   "license": "ISC",
   "devDependencies": {
+    "playwright": "^1.64.1",
     "prettier": "^3.9.10",
     "prettier-plugin-organize-imports": "^4.3.0",
     "tailwindcss": "^4.3.3"

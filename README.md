@@ -13,7 +13,7 @@
 
 </div>
 
-> Note: this is a sample/reference project built at the TriNIT hackathon (team BugBiters). It is not actively deployed; the Render demo linked below is offline.
+> Note: this is a sample/reference project built at the TriNIT hackathon (team BugBiters). It is not actively deployed; the Render demo linked below is offline. `npm run demo` runs the whole app locally against an in-memory MongoDB with seeded tutors, no setup needed.
 
 ---
 
@@ -22,6 +22,29 @@
 **Lingua Connect** is a marketplace that connects language learners with tutors for one-on-one lessons. Students sign up, filter tutors by language, experience and price, book an open slot and pay through Stripe Checkout. Tutors publish their availability as slots, write tests for their students, and students keep per-language flashcard decks.
 
 It is a three-tier MERN app: a React 19 + Vite single-page client, an Express 5 REST API, and MongoDB through Mongoose 9.
+
+---
+
+## Screenshots
+
+Captured from `npm run demo` with `npm run screenshots` (Playwright, 1440x900 desktop and iPhone 13 viewports).
+
+| Find a tutor | Book a slot | Flashcards |
+| --- | --- | --- |
+| ![Tutor search with filters and cards](docs/screenshots/desktop-tutors.png) | ![Tutor profile with open slots](docs/screenshots/desktop-booking.png) | ![Spanish flashcard deck with one card flipped](docs/screenshots/desktop-flashcards.png) |
+
+| Student profile | Tutor dashboard |
+| --- | --- |
+| ![Student profile with booked classes and tests](docs/screenshots/desktop-profile.png) | ![Tutor profile with classes and open slots](docs/screenshots/desktop-tutor-dashboard.png) |
+
+On a phone the filter column collapses behind a toggle, cards go full width and slot lists scroll sideways:
+
+<p align="center">
+  <img src="docs/screenshots/phone-tutors.png" width="200" alt="Tutor list on a phone" />
+  <img src="docs/screenshots/phone-booking.png" width="200" alt="Booking modal on a phone" />
+  <img src="docs/screenshots/phone-profile.png" width="200" alt="Profile on a phone" />
+  <img src="docs/screenshots/phone-flashcards.png" width="200" alt="Flashcards on a phone" />
+</p>
 
 ---
 
@@ -34,16 +57,16 @@ It is a three-tier MERN app: a React 19 + Vite single-page client, an Express 5 
 | **Sign up and sign in**   | Email + password accounts (bcrypt hashes, 7-day JWT), student or tutor role  |
 | **Password reset by OTP** | 6-digit code mailed via Nodemailer, valid for 10 minutes                     |
 | **Tutor search**          | Filter by 11 languages, years of experience and price (up to INR 5000)       |
-| **Slot booking**          | Book a tutor's open slot (45, 60 or 90 minutes) and pay with Stripe Checkout |
-| **Flashcards**            | Create and review flashcards grouped by language                             |
+| **Slot booking**          | Book a tutor's open slot (45, 60 or 90 minutes) and pay with Stripe Checkout; the class is booked only after Stripe confirms the payment |
+| **Flashcards**            | Private decks grouped by language; tap a card to flip it                     |
 
 ### For Tutors
 
 | Feature                | Description                                                        |
 | ---------------------- | ------------------------------------------------------------------ |
 | **Availability slots** | Publish date, start time, duration, price and language per slot    |
-| **Class management**   | A booked slot becomes a class linked to both tutor and student     |
-| **Tests**              | Create tests with question and answer pairs per language and level |
+| **Class management**   | A paid slot becomes a class linked to both tutor and student       |
+| **Tests**              | Create tests with question and answer pairs per language and level; only the author can edit them |
 
 ---
 
@@ -63,13 +86,18 @@ flowchart LR
         RL[express-rate-limit<br/>app-wide + per-route]
         Auth[authenticateUser<br/>JWT verify + user lookup]
         Routes["/auth /student /tutor<br/>/class /flashcard /test"]
+        Owner[Role and owner checks<br/>field allow-lists]
         Ctrl[Controllers]
-        RL --> Auth --> Routes --> Ctrl
+        Hook["/stripe/webhook<br/>signature verified"]
+        RL --> Auth --> Routes --> Owner --> Ctrl
+        RL --> Hook
     end
 
     API -- REST/JSON --> RL
     Ctrl -- Mongoose 9 --> DB[(MongoDB)]
+    Hook -- book class --> DB
     Ctrl -- Checkout Session --> Stripe[Stripe API]
+    Stripe -- checkout.session.completed --> Hook
     Ctrl -- OTP mail --> Mail[Gmail SMTP<br/>Nodemailer]
     Stripe -. hosted checkout redirect .-> UI
 ```
@@ -83,21 +111,28 @@ sequenceDiagram
     participant M as MongoDB
     participant P as Stripe
 
-    S->>A: POST /class/create (slot details)
-    A->>M: insert Class
-    S->>A: POST /student/addClass/:id and /tutor/addClass/:id
-    A->>M: link class to student and tutor
-    S->>A: DELETE /tutor/delete-slot/:id/:slotId
-    A->>M: remove the booked slot
-    S->>A: POST /student/create-checkout-session
-    A->>P: checkout.sessions.create (INR line item)
+    S->>A: POST /student/create-checkout-session { tutorId, slotId }
+    A->>M: read the slot (price comes from here, not the browser)
+    A->>P: checkout.sessions.create (INR, metadata: student, tutor, slot)
     P-->>A: session id + hosted url
     A-->>S: { id, url }
-    S->>P: window.location.assign(url)
-    P-->>S: redirect to /profile or /payment-failed
+    S->>P: window.location.assign(url) and pay
+    P->>A: POST /stripe/webhook checkout.session.completed (signed)
+    A->>A: verify Stripe-Signature over the raw body
+    A->>M: insert Class with unique stripeSessionId
+    A->>M: atomically $pull the slot from the tutor
+    A->>M: $addToSet the class on student and tutor
+    A-->>P: 200 { result: "booked" }
+    P-->>S: redirect to /profile?checkout=success
 ```
 
-The class is created and the slot removed before payment, so an abandoned checkout still holds the booking. Confirming the booking from Stripe's `checkout.session.completed` webhook is a known follow-up.
+Nothing is booked until Stripe says the payment went through, so an abandoned checkout leaves the slot open. Three cases are handled and tested in [`server/test/payments.test.js`](server/test/payments.test.js):
+
+- **Replays.** Stripe can deliver an event more than once. The Checkout Session id is a unique index on `Class`, so a second delivery answers `duplicate` and books nothing.
+- **Two students, one slot.** Both can open a checkout while the slot is free. The slot is removed with a conditional `$pull`, so only one payment wins; the other class is rolled back and that payment is refunded through `stripe.refunds.create`.
+- **Price tampering.** The amount is `slot.price * 100` read from MongoDB. A `price` or `quantity` in the request body is ignored.
+
+Students can also join an existing class (`{ classId }`), which goes through the same checkout and webhook.
 
 ### Data model
 
@@ -105,26 +140,29 @@ The class is created and the slot removed before payment, so an abandoned checko
 | ----------- | ------------------------------------------------------------------------------------------------------- |
 | `Student`   | name, email (unique), password hash, role, refs to classes, tests, flashcards                           |
 | `Tutor`     | name, email (unique), password hash, languages, yearsOfExperience, rating, slotsAvailability[], classes |
-| `Class`     | language, tutor ref, startTime, duration, price, level, isCancelled                                     |
-| `Test`      | language, level, questions[] (question, answer)                                                         |
-| `Flashcard` | language, question, answer                                                                              |
+| `Class`     | language, tutor ref, startTime, duration, price, level, isCancelled, stripeSessionId (unique, sparse)   |
+| `Test`      | language, level, tutor ref (author), questions[] (question, answer)                                     |
+| `Flashcard` | language, question, answer, owner ref (student)                                                         |
 | `Otp`       | email, otp, createdAt (expiry checked at 10 minutes)                                                    |
 
 Password hashes never leave the API: both user schemas strip `password` in their `toJSON` transform.
 
 ### API surface
 
-All routes are mounted at the root (no `/api` prefix). Everything except `/auth/*` needs `Authorization: Bearer <jwt>`.
+All routes are mounted at the root (no `/api` prefix). Everything except `/auth/*` and `/stripe/webhook` needs `Authorization: Bearer <jwt>`. The full contract is in [`docs/openapi.yaml`](docs/openapi.yaml) (OpenAPI 3.1, 37 operations); `server/test/openapi.test.js` fails if a route exists in code but not in the spec, or the other way round.
 
 | Prefix         | Endpoints                                                                                                                                   |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/auth`        | `POST /signup`, `/login`, `/verify-email`, `/verify-otp`, `/reset-password`                                                                 |
-| `/student`     | `GET /view`, `/view/:id`; `PUT /update/:id`; `DELETE /delete/:id`; `POST /addClass/:id`, `/create-checkout-session`                         |
-| `/tutor`       | `GET /view`, `/view/:id`; `PUT /update/:id`; `DELETE /delete/:id`; `POST /add-slot/:id`, `/addClass/:id`; `DELETE /delete-slot/:id/:slotId` |
-| `/class`       | `GET /view`, `/view/:id`; `POST /create`; `PUT /update/:id`; `DELETE /delete/:id`                                                           |
+| `/student`     | `GET /view`, `/view/:id`; `PUT /update/:id`; `DELETE /delete/:id`; `POST /create-checkout-session` (students only)                          |
+| `/tutor`       | `GET /view`, `/view/:id`; `PUT /update/:id`; `DELETE /delete/:id`; `POST /add-slot/:id`; `DELETE /delete-slot/:id/:slotId`                  |
+| `/class`       | `GET /view`, `/view/:id`; `POST /create` (tutors only); `PUT /update/:id`; `DELETE /delete/:id`                                             |
 | `/flashcard`   | student role only: `GET /view`, `/view/:id`; `POST /create`, `/create/:id`, `/get/:id`; `PUT /update/:id`; `DELETE /delete/:id`             |
-| `/test`        | `GET /view`, `/view/:id`; `POST /create`, `/add-question/:id`; `PUT /update/:id`; `DELETE /delete/:id`, `/delete-question/:id/:questionId`  |
+| `/test`        | `GET /view`, `/view/:id`; `POST /create` (tutors only), `/add-question/:id`; `PUT /update/:id`; `DELETE /delete/:id`, `/delete-question/:id/:questionId` |
+| `/stripe`      | `POST /webhook`, called by Stripe and authenticated by the `Stripe-Signature` header                                                        |
 | `/token-check` | `GET` returns `{ isAuthenticated: true }` for a valid token                                                                                 |
+
+Every write is owner-checked: a student or tutor edits only their own account and slots, a tutor edits only the classes and tests they own, and a student reads and edits only their own flashcards. Anything else returns 403.
 
 ---
 
@@ -132,9 +170,10 @@ All routes are mounted at the root (no `/api` prefix). Everything except `/auth/
 
 - **MongoDB + Mongoose** - tutor availability is a nested array of slots per tutor, which maps naturally onto a document store; refs (`populate`) join classes, tests and flashcards back to a user.
 - **Stateless JWT auth** - a 7-day token signed with `JWT_SECRET`; the middleware re-reads the user on every request so a deleted account stops working immediately.
-- **Stripe Checkout (hosted page)** - no card data touches the app. The server creates a Checkout Session and the client redirects to `session.url` (Stripe.js removed `redirectToCheckout` in its 2025-09-30 release).
+- **Stripe Checkout (hosted page) + webhook** - no card data touches the app. The server prices the session from the database, the client redirects to `session.url` (Stripe.js removed `redirectToCheckout` in its 2025-09-30 release), and the class is created only by the signed `checkout.session.completed` webhook. The Stripe client is created on first use, so the server boots without a key and checkout answers 503 instead.
 - **Two rate limiters** - a 300 requests / 5 minutes cap on every route (it runs before the JWT lookup), and a stricter 100 / 5 minutes on auth and write routes.
-- **Field allow-lists on updates** - student, tutor and test updates copy only named fields, so a client cannot set `role`, `password` or `rating`. Students and tutors may only update or delete their own record; class, test and flashcard routes do not check ownership yet.
+- **Field allow-lists and owner refs** - signup and every create or update copy only named scalar fields, so a client cannot set `role`, `password`, `rating` or an owner. `Class.tutor`, `Test.tutor` and `Flashcard.owner` are set from the JWT, never from the body, and checked on every edit.
+- **Tests against a real MongoDB** - `node:test` + supertest run the actual Express app against `mongodb-memory-server`, so ownership 403s, injection 400s, webhook idempotency and the double-booking race are tested end to end, not mocked. Only the Stripe HTTP client is faked; webhook payloads are signed with Stripe's own `generateTestHeaderString`.
 - **Vite over CRA** - the client moved from Create React App to Vite 8 with the Tailwind 4 plugin.
 
 ---
@@ -161,7 +200,10 @@ All routes are mounted at the root (no `/api` prefix). Everything except `/auth/
 
 ### Tooling
 
-- **GitHub Actions** - client build and server syntax check on every push and PR, plus CodeQL
+- **GitHub Actions** - client build, server syntax check and the API test suite on every push and PR, plus CodeQL
+- **node:test**, **supertest**, **mongodb-memory-server** - API tests
+- **Playwright** - README screenshots (`npm run screenshots`)
+- **Docker Compose** - MongoDB, API and nginx-served client in one command
 - **Renovate** - dependency updates
 - **Concurrently** - run client and server together
 - **Prettier** - formatting
@@ -175,6 +217,7 @@ Lingua-Connect/
 ├── client/                  # React frontend (Vite)
 │   ├── index.html           # App entry HTML
 │   ├── vite.config.js       # Dev server on :3000, build output in build/
+│   ├── Dockerfile           # Vite build served by nginx (nginx.conf)
 │   └── src/
 │       ├── api/             # Axios service files, one per resource
 │       ├── components/      # NavBar, auth forms, modals, filters
@@ -188,8 +231,16 @@ Lingua-Connect/
 │   ├── middleware/          # authenticateUser, checkUserRole
 │   ├── models/              # Mongoose schemas
 │   ├── routes/              # Route definitions
-│   ├── utils/               # Rate limiters, Winston logger
+│   ├── utils/               # Rate limiters, logger, field sanitizers, Stripe client
+│   ├── scripts/             # seed.js (demo data), demo.js (in-memory MongoDB)
+│   ├── test/                # node:test suites
+│   ├── app.js               # Express app (no listen), used by index.js, tests and demo
 │   └── index.js             # Server entry point
+├── docs/
+│   ├── openapi.yaml         # API contract
+│   └── screenshots/         # README images
+├── scripts/screenshots.mjs  # Playwright capture script
+├── docker-compose.yml       # mongo + api + client
 ├── .github/workflows/ci.yml # CI
 ├── package.json             # Root scripts (concurrently)
 └── README.md
@@ -199,13 +250,34 @@ Lingua-Connect/
 
 ## Quick Start
 
-### Prerequisites
+### Fastest: demo mode (no MongoDB, no accounts)
+
+```bash
+git clone https://github.com/Sagargupta16/Lingua-Connect.git
+cd Lingua-Connect
+npm run fb-install
+npm run demo
+```
+
+`npm run demo` starts the API on an in-memory MongoDB seeded with 6 tutors, 11 open slots, 2 booked classes, a tutor-written test and 7 flashcards, plus the Vite client on [http://localhost:3000](http://localhost:3000). Log in as `student@demo.lingua.dev` or `tutor@demo.lingua.dev`, password `Demo1234`. Nothing is saved; stop it to reset. Checkout answers 503 unless `STRIPE_SECRET_KEY` is in `server/.env`.
+
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
+Starts MongoDB 8, the API (seeded on first start) on :5000 and the built client on [http://localhost:3000](http://localhost:3000), with the same demo logins. Data lives in the `mongo-data` volume; `docker compose down -v` wipes it. Stripe and mail keys are read from a root `.env` if present.
+
+### Manual setup
+
+#### Prerequisites
 
 - **Node.js 24** (see `.nvmrc`) and **npm 10+**
 - **MongoDB** (local or Atlas)
 - A Stripe test secret key and a Gmail app password, if you want checkout and OTP mail to work
 
-### Installation Steps
+#### Installation Steps
 
 1. **Clone the repository**
 
@@ -230,6 +302,7 @@ Lingua-Connect/
    JWT_SECRET=a_long_random_string
    JWT_SALT_ROUNDS=10
    STRIPE_SECRET_KEY=sk_test_...
+   STRIPE_WEBHOOK_SECRET=whsec_...
    EMAIL_ID=your_gmail_address
    EMAIL_PASSWORD=your_gmail_app_password
    CLIENT_URL=http://localhost:3000
@@ -243,13 +316,19 @@ Lingua-Connect/
    npm run start
    ```
 
-   This runs the API with `node --watch` and the Vite dev server side by side.
+   This runs the API with `node --watch` and the Vite dev server side by side. `npm run seed --prefix server` fills a local database with the demo data (it refuses non-local connection strings without `--force`).
+
+   To book a class locally, forward Stripe test events to the webhook and copy the `whsec_...` it prints into `STRIPE_WEBHOOK_SECRET`:
+
+   ```bash
+   stripe listen --forward-to localhost:5000/stripe/webhook
+   ```
 
 5. **Open the application**
    - Frontend: [http://localhost:3000](http://localhost:3000)
    - Backend API: [http://localhost:5000](http://localhost:5000)
 
-### Alternative Commands
+#### Alternative Commands
 
 ```bash
 # Install frontend dependencies only
@@ -266,7 +345,18 @@ npm run backend-start
 
 # Build the frontend for production (output in client/build)
 npm run frontend-build
+
+# Run the API tests
+npm test
+
+# Recapture the README screenshots (needs npm run demo running and
+# a one-time npx playwright install chromium)
+npm run screenshots
 ```
+
+### Tests
+
+`npm test` runs 29 tests in 5 files under `server/test/`: auth and injection (7), ownership and roles (7), checkout and webhook (11), the OpenAPI contract (2) and the demo seed (2). Each file starts its own in-memory MongoDB; the first run downloads the MongoDB binary.
 
 ---
 
