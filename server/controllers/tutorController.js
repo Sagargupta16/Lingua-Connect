@@ -79,14 +79,21 @@ exports.deleteTutor = async (req, res) => {
   }
 };
 
-// Add a Slot to a Tutor with rate limiting
+// Add a Slot to a Tutor with rate limiting. Tutors manage only their own
+// slots; the slot fields are allow-listed and the id is generated here.
 exports.addSlot = async (req, res) => {
   try {
-    const { id } = req.params,
-      tutor = await Tutor.findById(id);
+    const { id } = req.params;
+    if (!req.user._id.equals(id))
+      return res.status(403).json({ errors: ["Forbidden"] });
+    const tutor = await Tutor.findById(id);
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
-    req.body.id = uuidv4();
-    tutor.slotsAvailability.push(req.body);
+    const slot = pickScalars(
+      req.body,
+      SLOT_FIELDS.filter((field) => field !== "id"),
+    );
+    slot.id = uuidv4();
+    tutor.slotsAvailability.push(slot);
     await tutor.save();
     res.json(tutor);
   } catch (error) {
@@ -99,25 +106,12 @@ exports.addSlot = async (req, res) => {
 exports.deleteSlot = async (req, res) => {
   try {
     const { id, slotId } = req.params;
+    if (!req.user._id.equals(id))
+      return res.status(403).json({ errors: ["Forbidden"] });
     const tutor = await Tutor.findById(id);
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
     const slots = tutor.slotsAvailability.filter((slot) => slot._id != slotId);
     tutor.slotsAvailability = slots;
-    await tutor.save();
-    res.json(tutor);
-  } catch (error) {
-    logger.error(error);
-    res.status(500).json({ errors: ["Internal server error"] });
-  }
-};
-
-// Add a Class to a Tutor with rate limiting
-exports.addClass = async (req, res) => {
-  try {
-    const { id } = req.params,
-      tutor = await Tutor.findById(id);
-    if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });
-    tutor.classes.push(req.body);
     await tutor.save();
     res.json(tutor);
   } catch (error) {

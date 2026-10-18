@@ -6,6 +6,7 @@ const logger = require("../utils/logger");
 const Otp = require("../models/Otp");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { pickScalars, scalarArray } = require("../utils/sanitize");
 
 exports.postSignup = async (req, res) => {
   try {
@@ -47,7 +48,12 @@ exports.postSignup = async (req, res) => {
       user.password,
       Number(process.env.JWT_SALT_ROUNDS),
     );
-    user.password = hashedPassword;
+    // Build the account from named fields only, so signup cannot set
+    // rating, classes, slots or any other server-owned field.
+    const account = {
+      ...pickScalars(user, ["name", "email", "role"]),
+      password: hashedPassword,
+    };
 
     if (user.role === "tutor") {
       if (!Array.isArray(user.languages) || user.languages.length === 0) {
@@ -55,14 +61,16 @@ exports.postSignup = async (req, res) => {
           .status(400)
           .json({ errors: ["Atleast 1 language required"] });
       }
-      if (user.yearsOfExperience < 0) {
+      if (!(Number(user.yearsOfExperience) >= 0)) {
         return res
           .status(400)
           .json({ errors: ["Years of experience must be greater than 0"] });
       }
-      await new Tutor(user).save();
+      account.languages = scalarArray(user.languages);
+      account.yearsOfExperience = Number(user.yearsOfExperience);
+      await new Tutor(account).save();
     } else {
-      await new Student(user).save();
+      await new Student(account).save();
     }
     logger.info(`New user created: ${user.email}`);
     res.status(201).json({
@@ -156,7 +164,7 @@ exports.postVerifyEmail = async (req, res) => {
 
     // Define email options
     let mailOptions = {
-      from: "My Journey",
+      from: `"Lingua Connect" <${process.env.EMAIL_ID}>`,
       to: email,
       subject: "OTP for Verification",
       text: `Your OTP is: ${otp} use it to verify your account within 10 minutes.`,

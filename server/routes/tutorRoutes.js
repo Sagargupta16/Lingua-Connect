@@ -42,7 +42,4 @@ router.delete(
   tutorController.deleteSlot,
 );
 
-// Add class to tutor
-router.post("/addClass/:id", authenticateUser, tutorController.addClass);
-
 module.exports = router;
