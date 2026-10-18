@@ -1,6 +1,10 @@
 const logger = require("../utils/logger");
 const Flashcard = require("../models/Flashcard");
 const Student = require("../models/Student");
+const { pickScalars } = require("../utils/sanitize");
+
+// Fields a client may set on a flashcard; values must be scalars.
+const FLASHCARD_FIELDS = ["language", "question", "answer"];
 
 exports.viewAllFlashcards = async (req, res) => {
   try {
@@ -27,7 +31,9 @@ exports.viewSingleFlashcard = async (req, res) => {
 
 exports.createFlashcard = async (req, res) => {
   try {
-    const flashcard = await Flashcard.create(req.body);
+    const flashcard = await Flashcard.create(
+      pickScalars(req.body, FLASHCARD_FIELDS),
+    );
     res.json(flashcard);
   } catch (error) {
     logger.error(error);
@@ -38,7 +44,8 @@ exports.createFlashcard = async (req, res) => {
 exports.updateFlashcard = async (req, res) => {
   try {
     const { id } = req.params,
-      flashcard = await Flashcard.findByIdAndUpdate(id, req.body, {
+      updates = pickScalars(req.body, FLASHCARD_FIELDS),
+      flashcard = await Flashcard.findByIdAndUpdate(id, updates, {
         returnDocument: "after",
       });
     if (!flashcard)
@@ -84,7 +91,9 @@ exports.getFlashCardsByLanguage = async (req, res) => {
 
 exports.createFlashcardForStudent = async (req, res) => {
   try {
-    const flashcard = await Flashcard.create(req.body);
+    const flashcard = await Flashcard.create(
+      pickScalars(req.body, FLASHCARD_FIELDS),
+    );
 
     const { id } = req.params;
     const student = await Student.findById(id);

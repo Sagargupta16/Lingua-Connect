@@ -1,5 +1,19 @@
 const logger = require("../utils/logger");
 const Class = require("../models/Class");
+const { pickScalars } = require("../utils/sanitize");
+
+// Fields a client may set on a class. Timestamps and anything outside the
+// schema are dropped, and every value must be a scalar.
+const CLASS_FIELDS = [
+  "language",
+  "tutor",
+  "startTime",
+  "duration",
+  "price",
+  "isCancelled",
+  "level",
+  "videoId",
+];
 
 exports.viewAllClasses = async (req, res) => {
   try {
@@ -25,7 +39,7 @@ exports.viewSingleClass = async (req, res) => {
 
 exports.createClass = async (req, res) => {
   try {
-    const class_ = await Class.create(req.body);
+    const class_ = await Class.create(pickScalars(req.body, CLASS_FIELDS));
     res.json(class_);
   } catch (error) {
     logger.error(error);
@@ -36,7 +50,8 @@ exports.createClass = async (req, res) => {
 exports.updateClass = async (req, res) => {
   try {
     const { id } = req.params,
-      class_ = await Class.findByIdAndUpdate(id, req.body, {
+      updates = pickScalars(req.body, CLASS_FIELDS),
+      class_ = await Class.findByIdAndUpdate(id, updates, {
         returnDocument: "after",
       });
 

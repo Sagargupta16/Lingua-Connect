@@ -9,6 +9,7 @@
 - Fixed: duplicate `email` index warning on the Student and Tutor schemas
 - Security: student and tutor update and delete routes return 403 unless the id is the caller's own account
 - Security: auth routes reject a non-string `email` (MongoDB operator injection such as `{"$ne": null}`)
+- Security: class, flashcard, test, student and tutor create and update handlers copy only their schema fields and drop any non-scalar value, so a body such as `{"$unset": {...}}` or `{"name": {"$gt": ""}}` cannot reach Mongoose (CodeQL js/sql-injection, Sonar S4684 mass assignment)
 - Security: app-wide rate limit (300 requests per 5 minutes) ahead of the JWT user lookup, on top of the stricter per-route limit
 - Security: OTP codes, request bodies and password hashes are no longer written to logs
 - Security: concurrently 10.0.6 and shell-quote 1.12.0 (GHSA-pqg4-j6r4-53mv, critical); nodemon replaced by `node --watch`, removing the vulnerable braces chain (GHSA-vfj7-8cjw-p6xm)

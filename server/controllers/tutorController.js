@@ -1,5 +1,10 @@
 const Tutor = require("../models/Tutor");
 const logger = require("../utils/logger");
+const {
+  pickScalars,
+  scalarArray,
+  objectArray,
+} = require("../utils/sanitize");
 const { v4: uuidv4 } = require("uuid");
 
 exports.viewAllTutors = async (req, res) => {
@@ -25,25 +30,31 @@ exports.viewSingleTutor = async (req, res) => {
 };
 
 // Fields a client may change via update. Blocks mass-assignment of
-// role, password, rating (self-inflation) and ObjectId ref arrays.
-const TUTOR_UPDATABLE_FIELDS = [
-  "name",
-  "email",
-  "languages",
-  "yearsOfExperience",
-  "slotsAvailability",
+// role, password, rating (self-inflation) and ObjectId ref arrays, and
+// keeps scalars only so no operator can ride along in a value.
+const SLOT_FIELDS = [
+  "id",
+  "date",
+  "startTime",
+  "duration",
+  "price",
+  "language",
 ];
+const tutorUpdates = (body) => {
+  const updates = pickScalars(body, ["name", "email", "yearsOfExperience"]);
+  const languages = scalarArray(body?.languages);
+  if (languages) updates.languages = languages;
+  const slots = objectArray(body?.slotsAvailability, SLOT_FIELDS);
+  if (slots) updates.slotsAvailability = slots;
+  return updates;
+};
 
 exports.updateTutor = async (req, res) => {
   try {
     const { id } = req.params;
     if (!req.user._id.equals(id))
       return res.status(403).json({ errors: ["Forbidden"] });
-    const updates = {};
-    for (const field of TUTOR_UPDATABLE_FIELDS) {
-      if (req.body[field] !== undefined) updates[field] = req.body[field];
-    }
-    const tutor = await Tutor.findByIdAndUpdate(id, updates, {
+    const tutor = await Tutor.findByIdAndUpdate(id, tutorUpdates(req.body), {
       returnDocument: "after",
     });
     if (!tutor) return res.status(404).json({ errors: ["Tutor not found"] });

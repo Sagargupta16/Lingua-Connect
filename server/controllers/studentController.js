@@ -1,5 +1,6 @@
 const Student = require("../models/Student");
 const logger = require("../utils/logger");
+const { pickScalars } = require("../utils/sanitize");
 const Stripe = require("stripe");
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const Class = require("../models/Class");
@@ -39,10 +40,7 @@ exports.updateStudent = async (req, res) => {
       const { id } = req.params;
       if (!req.user._id.equals(id))
          return res.status(403).json({ errors: ["Forbidden"] });
-      const updates = {};
-      for (const field of STUDENT_UPDATABLE_FIELDS) {
-         if (req.body[field] !== undefined) updates[field] = req.body[field];
-      }
+      const updates = pickScalars(req.body, STUDENT_UPDATABLE_FIELDS);
       const student = await Student.findByIdAndUpdate(id, updates, {
          returnDocument: "after",
       });
