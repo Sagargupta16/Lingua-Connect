@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.5.2] - 2026-10-24
+
+- Security: `authenticateUser` looks the account up by `decoded.id.toString()`, so a JWT payload value cannot reach `findOne` as an operator object (Sonar S5147, 2 alerts that appeared once 1.5.1 made the middleware visible to the taint analysis)
+
 ## [1.5.1] - 2026-10-24
 
 - Security: the routers are mounted one by one behind the app-wide `apiLimiter` again. The 1.5.0 loop over the mount table hid the limiter from CodeQL and reopened 34 `js/missing-rate-limiting` alerts on the class, flashcard, student, test and tutor routes; request limits are unchanged
