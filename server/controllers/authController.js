@@ -8,6 +8,12 @@ const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const { pickScalars, scalarArray, forLog } = require("../utils/sanitize");
 
+// A student or tutor by email. toString() keeps a non-string body value
+// (such as { "$ne": null }) from reaching the query as an operator.
+const findAccount = async (email) =>
+  (await Student.findOne({ email: email.toString() })) ||
+  (await Tutor.findOne({ email: email.toString() }));
+
 exports.postSignup = async (req, res) => {
   try {
     const user = req.body;
@@ -20,9 +26,7 @@ exports.postSignup = async (req, res) => {
         .status(400)
         .json({ errors: ["Name, Email and Password required"] });
 
-    const existingUser =
-      (await Student.findOne({ email: user.email.toString() })) ||
-      (await Tutor.findOne({ email: user.email.toString() }));
+    const existingUser = await findAccount(user.email);
     if (existingUser)
       return res.status(400).json({
         errors: ["User with the same email already exists"],
@@ -91,9 +95,7 @@ exports.getLogin = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and Password required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -137,9 +139,7 @@ exports.postVerifyEmail = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -194,9 +194,7 @@ exports.postVerifyOTP = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and OTP required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -237,9 +235,7 @@ exports.postResetPassword = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and Password required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)

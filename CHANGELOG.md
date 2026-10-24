@@ -3,7 +3,7 @@
 ## [1.5.1] - 2026-10-24
 
 - Security: the routers are mounted one by one behind the app-wide `apiLimiter` again. The 1.5.0 loop over the mount table hid the limiter from CodeQL and reopened 34 `js/missing-rate-limiting` alerts on the class, flashcard, student, test and tutor routes; request limits are unchanged
-- Security: signup, OTP verification and password reset query by `email.toString()` like login already did, so no request value reaches `findOne` unconverted (Sonar S5147, 6 alerts)
+- Security: the five auth handlers look accounts up through one `findAccount()` helper that queries by `email.toString()`, as login already did, so signup, OTP verification and password reset no longer pass a request value to `findOne` unconverted (Sonar S5147, 6 alerts)
 - Security: emails in auth log lines go through a new `forLog()` helper that replaces CR and LF, so a crafted email cannot forge a log entry (Sonar S5145, 5 alerts)
 - Security: body-parser 2.3.0 -> 2.4.0 (GHSA-27r3-jxmh-p828, high) and nodemailer 10.1.2 -> 10.2.1 (GHSA-8c8m-p3m8-cjg8, GHSA-m943-m63m-w62w, GHSA-85x2-q946-cp5h), published 2026-10-23
 
