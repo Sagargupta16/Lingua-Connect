@@ -14,9 +14,12 @@ const authenticateUser = async (req, res, next) => {
 
     let user;
     try {
+      // toString() keeps a token payload value from reaching the query as an
+      // operator object.
+      const id = decoded.id.toString();
       user =
-        (await Student.findOne({ _id: decoded.id })) ||
-        (await Tutor.findOne({ _id: decoded.id }));
+        (await Student.findOne({ _id: id })) ||
+        (await Tutor.findOne({ _id: id }));
     } catch (error) {
       console.error("User lookup error:", error.message);
       throw new Error("Error looking up user");
