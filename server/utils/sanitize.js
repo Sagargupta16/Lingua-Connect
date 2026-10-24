@@ -36,4 +36,8 @@ const objectArray = (value, fields) =>
       ? value.map((item) => pickScalars(item, fields))
       : undefined;
 
-module.exports = { pickScalars, scalarArray, objectArray };
+// A request value (such as an email) put into a log message, with CR and LF
+// replaced so it cannot start a forged log line.
+const forLog = (value) => String(value).replace(/[\n\r]/g, "_");
+
+module.exports = { pickScalars, scalarArray, objectArray, forLog };

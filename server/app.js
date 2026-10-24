@@ -38,7 +38,15 @@ app.use("/stripe", stripeRoutes);
 
 app.use(express.json());
 
-for (const [prefix, router] of mounts) app.use(prefix, router);
+// Mounted one by one rather than in a loop over `mounts`: CodeQL only sees
+// apiLimiter in front of routers mounted directly, and otherwise reports
+// every route as unthrottled (js/missing-rate-limiting).
+app.use("/auth", authRoutes);
+app.use("/student", studentRoutes);
+app.use("/tutor", tutorRoutes);
+app.use("/class", classRoutes);
+app.use("/flashcard", flashcardRoutes);
+app.use("/test", testRoutes);
 
 app.get("/token-check", authenticateUser, (req, res) => {
    try {
