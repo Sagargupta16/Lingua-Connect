@@ -6,7 +6,13 @@ const logger = require("../utils/logger");
 const Otp = require("../models/Otp");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
-const { pickScalars, scalarArray } = require("../utils/sanitize");
+const { pickScalars, scalarArray, forLog } = require("../utils/sanitize");
+
+// A student or tutor by email. toString() keeps a non-string body value
+// (such as { "$ne": null }) from reaching the query as an operator.
+const findAccount = async (email) =>
+  (await Student.findOne({ email: email.toString() })) ||
+  (await Tutor.findOne({ email: email.toString() }));
 
 exports.postSignup = async (req, res) => {
   try {
@@ -20,9 +26,7 @@ exports.postSignup = async (req, res) => {
         .status(400)
         .json({ errors: ["Name, Email and Password required"] });
 
-    const existingUser =
-      (await Student.findOne({ email: user.email })) ||
-      (await Tutor.findOne({ email: user.email }));
+    const existingUser = await findAccount(user.email);
     if (existingUser)
       return res.status(400).json({
         errors: ["User with the same email already exists"],
@@ -72,7 +76,7 @@ exports.postSignup = async (req, res) => {
     } else {
       await new Student(account).save();
     }
-    logger.info(`New user created: ${user.email}`);
+    logger.info(`New user created: ${forLog(user.email)}`);
     res.status(201).json({
       messages: ["User created successfully"],
     });
@@ -91,9 +95,7 @@ exports.getLogin = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and Password required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -115,7 +117,7 @@ exports.getLogin = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
     );
-    logger.info(`User logged in: ${email}`);
+    logger.info(`User logged in: ${forLog(email)}`);
     res.json({ status: true, data: { token }, messages: ["Login Successful"] });
   } catch (error) {
     logger.error(error);
@@ -137,9 +139,7 @@ exports.postVerifyEmail = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email required"] });
 
-    const user =
-      (await Student.findOne({ email: email.toString() })) ||
-      (await Tutor.findOne({ email: email.toString() }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -150,7 +150,7 @@ exports.postVerifyEmail = async (req, res) => {
 
     await new Otp({ email, otp }).save();
 
-    logger.info(`OTP generated for ${email}`);
+    logger.info(`OTP generated for ${forLog(email)}`);
 
     // Create a nodemailer transporter
     let transporter = nodemailer.createTransport({
@@ -194,8 +194,7 @@ exports.postVerifyOTP = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and OTP required"] });
 
-    const user =
-      (await Student.findOne({ email })) || (await Tutor.findOne({ email }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -215,7 +214,7 @@ exports.postVerifyOTP = async (req, res) => {
     if (currentTime > otpExpiry)
       return res.status(401).json({ status: false, errors: ["OTP expired"] });
 
-    logger.info(`User verified: ${email}`);
+    logger.info(`User verified: ${forLog(email)}`);
 
     res.status(200).json({
       status: true,
@@ -236,8 +235,7 @@ exports.postResetPassword = async (req, res) => {
         .status(400)
         .json({ status: false, errors: ["Email and Password required"] });
 
-    const user =
-      (await Student.findOne({ email })) || (await Tutor.findOne({ email }));
+    const user = await findAccount(email);
     if (!user)
       return res
         .status(401)
@@ -280,7 +278,7 @@ exports.postResetPassword = async (req, res) => {
 
     await Otp.findByIdAndDelete(existing._id);
 
-    logger.info(`Password reset for ${email}`);
+    logger.info(`Password reset for ${forLog(email)}`);
 
     res.status(200).json({
       status: true,

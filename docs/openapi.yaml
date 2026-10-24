@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
    title: Lingua Connect API
-   version: 1.5.0
+   version: 1.5.1
    description: >-
       REST API behind the Lingua Connect tutor marketplace. Routes are mounted
       at the root (no /api prefix). Everything except /auth/* and
