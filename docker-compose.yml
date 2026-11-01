@@ -9,7 +9,7 @@
 # (compose reads it automatically) or export them before running.
 services:
    mongo:
-      image: mongo:8
+      image: mongo:9
       volumes:
          - mongo-data:/data/db
       healthcheck:
